@@ -1,27 +1,32 @@
 package food;
 
+import org.dreambot.api.methods.tabs.Tab;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.wrappers.items.Item;
 
 public class EatNode extends TaskNode {
-    private Item itemToEat = null;
+    private Item foodItem;
 
     @Override
     public int priority() {
-        return 1;
+        return 2;
     }
 
     @Override
     public boolean accept() {
-        itemToEat = getInventory().get(item -> item != null && item.getName().contains("Salmon"));
-        boolean shouldEat = getLocalPlayer().getHealthPercent() <= 30;
-
-        return itemToEat != null && shouldEat;
+        foodItem = getInventory().get(item -> item != null && item.getName().contains("Salmon"));
+        return foodItem != null && getLocalPlayer().getHealthPercent() <= 50;
     }
 
     @Override
     public int execute() {
-        itemToEat.interact("Eat");
-        return 0;
+        if (!getTabs().isOpen(Tab.INVENTORY)) {
+            if (getTabs().open(Tab.INVENTORY)) {
+                foodItem.interact("Eat");
+            }
+        } else {
+            foodItem.interact("Eat");
+        }
+        return 300 + (int) (Math.random() * 100);
     }
 }
