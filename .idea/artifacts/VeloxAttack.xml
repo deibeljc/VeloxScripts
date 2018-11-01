@@ -1,8 +1,0 @@
-<component name="ArtifactManager">
-  <artifact type="jar" build-on-make="true" name="VeloxAttack">
-    <output-path>$USER_HOME$/DreamBot/Scripts</output-path>
-    <root id="archive" name="VeloxAttack.jar">
-      <element id="module-output" name="VeloxCombat" />
-    </root>
-  </artifact>
-</component>
