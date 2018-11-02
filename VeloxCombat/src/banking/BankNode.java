@@ -7,7 +7,7 @@ import org.dreambot.api.script.ScriptManager;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.core.Instance;
-import utilities.Utility;
+import utility.Utility;
 
 import java.util.List;
 
@@ -29,23 +29,17 @@ public class BankNode extends TaskNode {
     public int execute() {
         GameObject doorToOpen = null;
         // If we can't walk there, try to open a door.
-        Tile tile = getFirstWalkingTile();
-        if (getWalking().getAStarPathFinder().calculate(getLocalPlayer().getTile(), tile).isEmpty()) {
-            List<GameObject> doors = getGameObjects().all(object -> object != null && object.getName().contains("door"));
-            // Sort by distance to NPC
-            doors.sort((door1, door2) -> (int) (tile.distance(door1) - tile.distance(door2)));
+        Tile firstWalkingTile = getFirstWalkingTile();
+        Utility utility = new Utility(getClient());
 
-            for (GameObject door : doors) {
-                Utility utility = new Utility();
-                if (utility.canBothPathTo(tile, door.getTile())) {
-                    doorToOpen = door;
-                    break;
-                }
-            }
+        if (getWalking().getAStarPathFinder().calculate(getLocalPlayer().getTile(), firstWalkingTile).isEmpty()) {
+            doorToOpen = utility.getDoorBetweenTiles(firstWalkingTile);
         }
 
         if (doorToOpen != null) {
+            final GameObject doorCheck = doorToOpen;
             doorToOpen.interact("Open");
+            sleepWhile(() -> doorCheck.hasAction("Open"), 10000);
         }
 
         if (getWalking().walk(getBank().getClosestBankLocation().getCenter())) {
@@ -65,8 +59,16 @@ public class BankNode extends TaskNode {
         return 0;
     }
 
+    /**
+     * Here we want to get the first node in the web that we would want to click to use
+     * for our door opening method.
+     * @return Tile of the first node in the web path
+     */
     private Tile getFirstWalkingTile() {
-        AbstractPath<AbstractWebNode> path = getWalking().getWebPathFinder().calculate(getLocalPlayer().getTile(), getBank().getClosestBankLocation().getCenter());
-        return path.next().getTile();
+        AbstractWebNode playerNode = getWalking().getWebPathFinder().getNearest(getLocalPlayer().getTile(), 25);
+        AbstractWebNode bankNode = getWalking().getWebPathFinder().getNearest(getBank().getClosestBankLocation().getCenter(), 25);
+        AbstractPath path = getWalking().getWebPathFinder().calculate(playerNode, bankNode);
+        AbstractWebNode firstTile = (AbstractWebNode) path.first();
+        return firstTile.getTile();
     }
 }

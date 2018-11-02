@@ -5,7 +5,6 @@ import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.impl.TaskScript;
-import utilities.Utility;
 
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
@@ -16,9 +15,10 @@ import java.util.concurrent.TimeUnit;
  * X Attack enemies it can path to
  *      X Possibly open doors in the way
  * - Eat food in a reasonable manner
- * - Be AFKish while fighting, similar to a real person
+ * X Be AFKish while fighting, similar to a real person
  *      - Move mouse off screen sometimes
  * X Bank for more food
+ *      X Handles closed door in the way of path
  *
  * Stretch Goal:
  *  - Auto switch between combat styles
@@ -32,41 +32,41 @@ import java.util.concurrent.TimeUnit;
         category = Category.COMBAT,
         description = "Fights some stuff",
         name = "Velox Combat",
-        version = 0.1
+        version = 0.5
 )
 public class Main extends TaskScript {
     @Override
     public void onStart() {
-        // Setup the context.
-        Utility.client = getClient();
         getSkillTracker().start();
         addNodes(new FightNode(), new EatNode(), new BankNode());
     }
 
     @Override
     public void onPaint(Graphics g) {
-        long TTLAttack = getSkillTracker().getTimeToLevel(Skill.ATTACK);
-        long TTLDefense = getSkillTracker().getTimeToLevel(Skill.DEFENCE);
-        long TTLStrength = getSkillTracker().getTimeToLevel(Skill.STRENGTH);
-
         g.setColor(new Color(0, 0, 0));
-        g.fillRect(260, 340, 280, 100);
-        g.drawRect(260, 340, 280, 100);
+        g.fillRect(120, 340, 360, 60);
         g.setColor(new Color(255, 255, 255));
-        g.drawString("Time to level attack: " + String.format("%d min, %d sec",
-            TimeUnit.MILLISECONDS.toMinutes(TTLAttack),
-            TimeUnit.MILLISECONDS.toSeconds(TTLAttack) -
-            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(TTLAttack))
-        ), 275, 360);
-        g.drawString("Time to level defense: " + String.format("%d min, %d sec",
-            TimeUnit.MILLISECONDS.toMinutes(TTLDefense),
-            TimeUnit.MILLISECONDS.toSeconds(TTLDefense) -
-            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(TTLDefense))
-        ), 275, 375);
-        g.drawString("Time to level strength: " + String.format("%d min, %d sec",
-            TimeUnit.MILLISECONDS.toMinutes(TTLStrength),
-            TimeUnit.MILLISECONDS.toSeconds(TTLStrength) -
-            TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(TTLStrength))
-        ), 275, 390);
+        g.drawString(formatSkillInfo(Skill.ATTACK), 130, 360);
+        g.drawString(formatSkillInfo(Skill.DEFENCE), 130, 375);
+        g.drawString(formatSkillInfo(Skill.STRENGTH), 130, 390);
+    }
+
+    private static String padRight(String s, int n) {
+        return String.format("%1$-" + n + "s", s);
+    }
+
+    private String formatSkillInfo(Skill skill) {
+        long ttl = getSkillTracker().getTimeToLevel(skill);
+        return padRight(skill.getName(), 10)
+                + ": TTL " +  padRight(formatMillis(ttl), 15)
+                + " | " + " LVL " + padRight(getSkills().getRealLevel(Skill.ATTACK) + " (" + getSkillTracker().getGainedLevels(skill) + ")", 6)
+                + " | Exp/hr " + padRight(String.valueOf(getSkillTracker().getGainedExperiencePerHour(skill)), 10);
+    }
+
+    private String formatMillis(long milli) {
+        return String.format("%d min, %d sec",
+            TimeUnit.MILLISECONDS.toMinutes(milli),
+            TimeUnit.MILLISECONDS.toSeconds(milli) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milli))
+        );
     }
 }

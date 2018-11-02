@@ -1,14 +1,14 @@
-package utilities;
+package utility;
 
 import org.dreambot.api.Client;
 import org.dreambot.api.methods.MethodContext;
 import org.dreambot.api.methods.map.Tile;
+import org.dreambot.api.wrappers.interactive.GameObject;
+
+import java.util.List;
 
 public class Utility extends MethodContext {
-
-    public static Client client;
-
-    public Utility() {
+    public Utility(Client client) {
         this.registerContext(client);
     }
 
@@ -33,5 +33,20 @@ public class Utility extends MethodContext {
         }
 
         return playerCanPathTo && npcCanPathTo;
+    }
+
+    public GameObject getDoorBetweenTiles(Tile targetTile) {
+        List<GameObject> doors = getGameObjects().all(object -> object != null && object.getName().contains("door"));
+        // Sort by distance to NPC
+        doors.sort((door1, door2) -> (int) (targetTile.distance(door1) - targetTile.distance(door2)));
+
+        for (GameObject door : doors) {
+            Utility utility = new Utility(getClient());
+            if (utility.canBothPathTo(targetTile, door.getTile())) {
+                return door;
+            }
+        }
+
+        return null;
     }
 }
