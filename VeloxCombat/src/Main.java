@@ -5,6 +5,7 @@ import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
 import org.dreambot.api.script.impl.TaskScript;
+import utilities.Utility;
 
 import java.awt.*;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 public class Main extends TaskScript {
     @Override
     public void onStart() {
+        // Setup the context.
+        Utility.client = getClient();
         getSkillTracker().start();
         addNodes(new FightNode(), new EatNode(), new BankNode());
     }
