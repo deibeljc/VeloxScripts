@@ -44,27 +44,28 @@ public class Main extends TaskScript {
     @Override
     public void onPaint(Graphics g) {
         g.setColor(new Color(0, 0, 0));
-        g.fillRect(120, 340, 360, 60);
+        g.fillRect(120, 340, 360, 160);
         g.setColor(new Color(255, 255, 255));
         g.drawString(formatSkillInfo(Skill.ATTACK), 130, 360);
         g.drawString(formatSkillInfo(Skill.DEFENCE), 130, 375);
         g.drawString(formatSkillInfo(Skill.STRENGTH), 130, 390);
     }
 
-    private static String padRight(String s, int n) {
+    private String padRight(String s, int n) {
         return String.format("%1$-" + n + "s", s);
     }
 
     private String formatSkillInfo(Skill skill) {
         long ttl = getSkillTracker().getTimeToLevel(skill);
-        return padRight(skill.getName(), 10)
-                + ": TTL " +  padRight(formatMillis(ttl), 15)
-                + " | " + " LVL " + padRight(getSkills().getRealLevel(Skill.ATTACK) + " (" + getSkillTracker().getGainedLevels(skill) + ")", 6)
-                + " | Exp/hr " + padRight(String.valueOf(getSkillTracker().getGainedExperiencePerHour(skill)), 10);
+
+        return padRight(skill.getName(), 15)
+                + padRight("TTL " + formatMillis(ttl), 15)
+                + " | " + padRight( "LVL " + getSkills().getRealLevel(skill) + " (" + getSkillTracker().getGainedLevels(skill) + ")", 15)
+                + " | " + padRight("Exp/hr " + getSkillTracker().getGainedExperiencePerHour(skill), 15);
     }
 
     private String formatMillis(long milli) {
-        return String.format("%d min, %d sec",
+        return String.format("%02d min, %02d sec",
             TimeUnit.MILLISECONDS.toMinutes(milli),
             TimeUnit.MILLISECONDS.toSeconds(milli) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(milli))
         );
