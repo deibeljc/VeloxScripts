@@ -54,7 +54,7 @@ public class FightNode extends TaskNode {
             npc.interact("Attack");
             log("Attacking");
         }
-        return 100 + (int) (Math.random() * 60);
+        return 100 + (int) (Math.random() * 300);
     }
 
     private boolean canBothPathTo(NPC npc, Tile... tiles) {

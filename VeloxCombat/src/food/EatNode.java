@@ -27,6 +27,6 @@ public class EatNode extends TaskNode {
         } else {
             foodItem.interact("Eat");
         }
-        return 300 + (int) (Math.random() * 100);
+        return 300 + (int) (Math.random() * 300);
     }
 }
