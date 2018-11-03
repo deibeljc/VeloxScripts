@@ -40,9 +40,9 @@ public class WalkToCows extends TaskNode {
                     // There is a stupid bug with the walking method that
                     // screws up around the toll gate
                     Tile workaroundTile = new Tile(3258, 3229);
-                    sleepUntil(() -> getLocalPlayer().getTile().getX() <= 3267, 5000);
+                    sleepUntil(() -> getLocalPlayer().getTile().getX() <= 3267, 20000);
                     getWalking().walkExact(workaroundTile.getArea(3).getRandomTile());
-                    sleepUntil(() -> workaroundTile.getArea(3).contains(getLocalPlayer()), 5000);
+                    sleepUntil(() -> workaroundTile.getArea(3).contains(getLocalPlayer()), 10000);
                 }
             }
             return 0;
