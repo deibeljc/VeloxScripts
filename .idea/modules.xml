@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/VeloxCombat/VeloxCombat.iml" filepath="$PROJECT_DIR$/VeloxCombat/VeloxCombat.iml" />
+      <module fileurl="file://$PROJECT_DIR$/VeloxMagic/VeloxMagic.iml" filepath="$PROJECT_DIR$/VeloxMagic/VeloxMagic.iml" />
       <module fileurl="file://$PROJECT_DIR$/VeloxScripts.iml" filepath="$PROJECT_DIR$/VeloxScripts.iml" />
     </modules>
   </component>
