@@ -1,6 +1,9 @@
 import banking.BankNode;
 import combat.FightNode;
 import food.EatNode;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
@@ -37,6 +40,19 @@ import java.util.concurrent.TimeUnit;
 public class Main extends TaskScript {
     @Override
     public void onStart() {
+        new JFXPanel();
+        Platform.runLater(() -> {
+            try {
+                Dialog dialog = new Dialog();
+                dialog.displayStage(false);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        if (getLocalPlayer().getTile() != null) {
+            BankNode.FightTile = getLocalPlayer().getTile();
+        }
         getSkillTracker().start();
         addNodes(new FightNode(), new EatNode(), new BankNode());
     }
