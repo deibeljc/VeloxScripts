@@ -1,4 +1,4 @@
-package utility;
+package com.dibes.utility;
 
 import org.dreambot.api.Client;
 import org.dreambot.api.methods.MethodContext;

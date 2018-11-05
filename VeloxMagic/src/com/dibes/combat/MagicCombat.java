@@ -1,4 +1,4 @@
-package combat;
+package com.dibes.combat;
 
 import org.dreambot.api.methods.Calculations;
 import org.dreambot.api.methods.magic.Normal;

@@ -1,4 +1,4 @@
-package food;
+package com.dibes.food;
 
 import org.dreambot.api.methods.tabs.Tab;
 import org.dreambot.api.script.TaskNode;

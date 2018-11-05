@@ -1,4 +1,4 @@
-package banking;
+package com.dibes.banking;
 
 import org.dreambot.api.methods.container.impl.bank.BankLocation;
 import org.dreambot.api.script.TaskNode;

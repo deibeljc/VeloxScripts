@@ -1,11 +1,12 @@
-package combat;
+package com.dibes.combat;
 
-import banking.BankNode;
+import com.dibes.banking.BankNode;
+import com.dibes.gui.GUI;
 import org.dreambot.api.methods.tabs.Tab;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.interactive.NPC;
-import utility.Utility;
+import com.dibes.utility.Utility;
 
 public class FightNode extends TaskNode {
     private NPC npc;
@@ -15,7 +16,7 @@ public class FightNode extends TaskNode {
     public boolean accept() {
         npc = getNpcs().closest(npc -> npc != null
                 && npc.getName() != null
-                && npc.getName().contains("warrior")
+                && GUI.state.getSelectedNpcSet().contains(npc.getName())
                 && ((npc.isInCombat() && npc.isInteracting(getLocalPlayer())) || !npc.isInCombat())
         );
 

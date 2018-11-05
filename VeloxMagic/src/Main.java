@@ -1,5 +1,5 @@
-import banking.BankHides;
-import combat.MagicCombat;
+import com.dibes.banking.BankHides;
+import com.dibes.combat.MagicCombat;
 import looting.LootHides;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;

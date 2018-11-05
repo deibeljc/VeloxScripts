@@ -1,12 +1,14 @@
-import banking.BankNode;
-import combat.FightNode;
-import food.EatNode;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
+package com.dibes;
+
+import com.dibes.banking.BankNode;
+import com.dibes.combat.FightNode;
+import com.dibes.food.EatNode;
+import com.dibes.gui.GUI;
+import com.dibes.gui.GuiNode;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
+import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.script.impl.TaskScript;
 
 import java.awt.*;
@@ -14,17 +16,17 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Goals:
- * Have a simple AIO combat bot that does the following:
+ * Have a simple AIO main.combat bot that does the following:
  * X Attack enemies it can path to
  *      X Possibly open doors in the way
- * - Eat food in a reasonable manner
+ * - Eat main.food in a reasonable manner
  * X Be AFKish while fighting, similar to a real person
  *      - Move mouse off screen sometimes
- * X Bank for more food
+ * X Bank for more main.food
  *      X Handles closed door in the way of path
  *
  * Stretch Goal:
- *  - Auto switch between combat styles
+ *  - Auto switch between main.combat styles
  *
  * ---
  * GUI: Selecting enemies, selecting loot options, creating a custom path, etc, etc.
@@ -37,24 +39,30 @@ import java.util.concurrent.TimeUnit;
         name = "Velox Combat",
         version = 0.5
 )
-public class Main extends TaskScript {
+public class VeloxCombat extends TaskScript {
+
+    private final TaskNode[] nodes = {new FightNode(), new EatNode(), new BankNode()};
+
     @Override
     public void onStart() {
-        new JFXPanel();
-        Platform.runLater(() -> {
-            try {
-                Dialog dialog = new Dialog();
-                dialog.displayStage(false);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        // Show the gui.
+        GUI gui = new GUI(this);
+        gui.setVisible(true);
+        getSkillTracker().start();
+        addNodes(new GuiNode());
+    }
 
-        if (getLocalPlayer().getTile() != null) {
+    public boolean startScript() {
+        if (BankNode.FightTile == null && getClient().isLoggedIn()) {
             BankNode.FightTile = getLocalPlayer().getTile();
         }
-        getSkillTracker().start();
-        addNodes(new FightNode(), new EatNode(), new BankNode());
+        addNodes(nodes);
+        return true;
+    }
+
+    public boolean stopScript() {
+        removeNodes(nodes);
+        return false;
     }
 
     @Override

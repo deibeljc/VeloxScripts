@@ -1,4 +1,4 @@
-package banking;
+package com.dibes.banking;
 
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.walking.path.AbstractPath;
@@ -7,9 +7,7 @@ import org.dreambot.api.script.ScriptManager;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.core.Instance;
-import utility.Utility;
-
-import java.util.List;
+import com.dibes.utility.Utility;
 
 public class BankNode extends TaskNode {
 
