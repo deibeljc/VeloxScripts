@@ -1,26 +1,28 @@
 package com.dibes.banking;
 
+import com.dibes.gui.GUI;
+import com.dibes.utility.Priorities;
+import com.dibes.utility.Priority;
+import com.dibes.utility.PriorityNode;
 import org.dreambot.api.methods.map.Tile;
 import org.dreambot.api.methods.walking.path.AbstractPath;
 import org.dreambot.api.methods.walking.web.node.AbstractWebNode;
-import org.dreambot.api.script.ScriptManager;
-import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.wrappers.interactive.GameObject;
-import org.dreambot.core.Instance;
 import com.dibes.utility.Utility;
 
-public class BankNode extends TaskNode {
+public class BankNode extends PriorityNode {
 
     public static Tile FightTile;
 
     @Override
-    public int priority() {
-        return 3;
+    public Priorities getPriorities() {
+        return new Priorities(Priority.HIGH, Priority.NORMAL);
     }
 
     @Override
     public boolean accept() {
-        return getInventory().all(item -> item != null && item.getName().contains("Salmon")).isEmpty();
+        return GUI.state.isShouldEat()
+                && getInventory().all(item -> item != null && item.getName().contains("Salmon")).isEmpty();
     }
 
     @Override
@@ -44,13 +46,7 @@ public class BankNode extends TaskNode {
             if (getBank().openClosest()) {
                 if (getBank().withdrawAll(item -> item != null && item.getName().contains("Salmon"))) {
                     // Walk back to the fighting area
-                    if (FightTile != null) {
-                        getWalking().walk(FightTile);
-                    } else {
-                        ScriptManager manager = new ScriptManager(Instance.getInstance());
-                        manager.stop();
-                        return 0;
-                    }
+                    getWalking().walk(FightTile);
                 }
             }
         }

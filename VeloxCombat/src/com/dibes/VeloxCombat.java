@@ -2,9 +2,12 @@ package com.dibes;
 
 import com.dibes.banking.BankNode;
 import com.dibes.combat.FightNode;
-import com.dibes.food.EatNode;
+import com.dibes.inventory.EatNode;
 import com.dibes.gui.GUI;
 import com.dibes.gui.GuiNode;
+import com.dibes.inventory.EquipNode;
+import com.dibes.utility.PriorityNode;
+import com.dibes.walking.WalkNode;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
@@ -12,6 +15,9 @@ import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.script.impl.TaskScript;
 
 import java.awt.*;
+import java.awt.event.WindowEvent;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -19,10 +25,10 @@ import java.util.concurrent.TimeUnit;
  * Have a simple AIO main.combat bot that does the following:
  * X Attack enemies it can path to
  *      X Possibly open doors in the way
- * - Eat main.food in a reasonable manner
+ * - Eat main.inventory in a reasonable manner
  * X Be AFKish while fighting, similar to a real person
  *      - Move mouse off screen sometimes
- * X Bank for more main.food
+ * X Bank for more main.inventory
  *      X Handles closed door in the way of path
  *
  * Stretch Goal:
@@ -37,19 +43,32 @@ import java.util.concurrent.TimeUnit;
         category = Category.COMBAT,
         description = "Fights some stuff",
         name = "Velox Combat",
-        version = 0.5
+        version = 0.7
 )
 public class VeloxCombat extends TaskScript {
 
-    private final TaskNode[] nodes = {new FightNode(), new EatNode(), new BankNode()};
+    private GUI gui;
+    private final PriorityNode[] nodes = {
+        new FightNode(),
+        new EatNode(),
+        new BankNode(),
+        new WalkNode(),
+        new EquipNode()
+    };
 
     @Override
     public void onStart() {
         // Show the gui.
-        GUI gui = new GUI(this);
+        gui = new GUI(this);
         gui.setVisible(true);
         getSkillTracker().start();
         addNodes(new GuiNode());
+    }
+
+    @Override
+    public void onExit() {
+        gui.setVisible(false);
+        gui.dispose();
     }
 
     public boolean startScript() {
@@ -70,9 +89,21 @@ public class VeloxCombat extends TaskScript {
         g.setColor(new Color(0, 0, 0));
         g.fillRect(120, 340, 360, 160);
         g.setColor(new Color(255, 255, 255));
+        // Do some debug paint
+        debugPaint(g);
         g.drawString(formatSkillInfo(Skill.ATTACK), 130, 360);
         g.drawString(formatSkillInfo(Skill.DEFENCE), 130, 375);
         g.drawString(formatSkillInfo(Skill.STRENGTH), 130, 390);
+    }
+
+    private void debugPaint(Graphics g) {
+        final PriorityNode[] sortedNodes = nodes.clone();
+        Arrays.sort(sortedNodes, Comparator.comparingInt(PriorityNode::priority));
+        int index = 0;
+        for (PriorityNode node : sortedNodes) {
+            g.drawString(node.priority() + " " + node.getClass().getSimpleName(), 560, 224 + (14 * index));
+            index++;
+        }
     }
 
     private String padRight(String s, int n) {

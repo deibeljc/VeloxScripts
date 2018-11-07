@@ -53,8 +53,38 @@ public class GUI extends JFrame {
 
     private JTabbedPane setupTabs() {
         JTabbedPane tabs = new JTabbedPane();
-        GridBagConstraints constraints = new GridBagConstraints();
+        JPanel combatPanel = getCombatPanel();
 
+        JPanel eatPanel = getEatPanel();
+
+        tabs.addTab("Combat", null, combatPanel, "Combat Settings");
+        tabs.addTab("Eat", null, eatPanel, "Combat Settings");
+
+        tabs.setPreferredSize(new Dimension(300, HEIGHT - 30));
+
+        return tabs;
+    }
+
+    private JPanel getEatPanel() {
+        JPanel eatPanel = new JPanel(false);
+        eatPanel.setLayout(new GridLayout(1, 1));
+
+        JCheckBox shouldEat = new JCheckBox("Should Eat");
+        shouldEat.setSelected(false);
+        shouldEat.addActionListener(e -> state.setShouldEat(shouldEat.isSelected()));
+
+        JSlider eatSlider = new JSlider(10, 100, 40);
+
+        eatPanel.add(shouldEat);
+        eatPanel.add(eatSlider);
+
+
+        return eatPanel;
+    }
+
+    private JPanel getCombatPanel() {
+
+        GridBagConstraints constraints = new GridBagConstraints();
         // Create our list of NPCs available
         JList npcList = new JList(state.getNpcListModel());
         npcList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -109,19 +139,7 @@ public class GUI extends JFrame {
         constraints.gridy = 2;
         constraints.gridwidth = GridBagConstraints.REMAINDER;
         combatPanel.add(selectedNpcsScroller, constraints);
-
-        JPanel eatPanel = new JPanel(false);
-        JLabel eatText = new JLabel("Eat");
-        eatText.setHorizontalAlignment(JLabel.CENTER);
-        eatPanel.setLayout(new GridLayout(1, 1));
-        eatPanel.add(eatText);
-
-        tabs.addTab("Combat", null, combatPanel, "Combat Settings");
-        tabs.addTab("Eat", null, eatPanel, "Combat Settings");
-
-        tabs.setPreferredSize(new Dimension(300, HEIGHT - 30));
-
-        return tabs;
+        return combatPanel;
     }
 
 }

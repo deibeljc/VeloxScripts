@@ -2,13 +2,15 @@ package com.dibes.combat;
 
 import com.dibes.banking.BankNode;
 import com.dibes.gui.GUI;
+import com.dibes.utility.PriorityNode;
+import org.dreambot.api.methods.container.impl.bank.Bank;
 import org.dreambot.api.methods.tabs.Tab;
 import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.wrappers.interactive.GameObject;
 import org.dreambot.api.wrappers.interactive.NPC;
 import com.dibes.utility.Utility;
 
-public class FightNode extends TaskNode {
+public class FightNode extends PriorityNode {
     private NPC npc;
     private GameObject doorToOpen;
 
@@ -20,9 +22,12 @@ public class FightNode extends TaskNode {
                 && ((npc.isInCombat() && npc.isInteracting(getLocalPlayer())) || !npc.isInCombat())
         );
 
-        boolean canPathToNpc = getWalking().getAStarPathFinder().calculate(getLocalPlayer().getTile(), npc.getTile()).size() > 0;
+        boolean canPathToNpc = false;
+        if (npc != null) {
+             canPathToNpc = getMap().canReach(npc);
+        }
 
-        if (!canPathToNpc) {
+        if (!canPathToNpc && npc != null) {
             Utility utility = new Utility(getClient());
             doorToOpen = utility.getDoorBetweenTiles(npc.getTile());
         }

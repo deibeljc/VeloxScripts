@@ -8,6 +8,7 @@ import java.util.List;
 
 public class State {
     private boolean scriptStarted = false;
+    private boolean shouldEat = false;
     private ListModel npcListModel = new DefaultListModel();
     private ListModel selectedNpcListModel = new DefaultListModel();
     private HashSet<String> npcSet = new HashSet<>();
@@ -49,5 +50,13 @@ public class State {
                 ((DefaultListModel) npcListModel).addElement(npcName);
             }
         }
+    }
+
+    public boolean isShouldEat() {
+        return shouldEat;
+    }
+
+    public void setShouldEat(boolean shouldEat) {
+        this.shouldEat = shouldEat;
     }
 }

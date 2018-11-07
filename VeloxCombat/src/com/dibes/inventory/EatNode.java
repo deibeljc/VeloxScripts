@@ -1,21 +1,26 @@
-package com.dibes.food;
+package com.dibes.inventory;
 
+import com.dibes.gui.GUI;
+import com.dibes.utility.Priorities;
+import com.dibes.utility.Priority;
+import com.dibes.utility.PriorityNode;
 import org.dreambot.api.methods.tabs.Tab;
-import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.wrappers.items.Item;
 
-public class EatNode extends TaskNode {
+public class EatNode extends PriorityNode {
     private Item foodItem;
 
     @Override
-    public int priority() {
-        return 2;
+    public Priorities getPriorities() {
+        return new Priorities(Priority.NORMAL, Priority.NORMAL);
     }
 
     @Override
     public boolean accept() {
         foodItem = getInventory().get(item -> item != null && item.getName().contains("Salmon"));
-        return foodItem != null && getLocalPlayer().getHealthPercent() <= 50;
+        return foodItem != null
+                && getLocalPlayer().getHealthPercent() <= 50
+                && GUI.state.isShouldEat();
     }
 
     @Override
