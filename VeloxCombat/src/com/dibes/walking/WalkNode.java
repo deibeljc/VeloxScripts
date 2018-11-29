@@ -9,12 +9,18 @@ public class WalkNode extends PriorityNode {
 
     @Override
     public Priorities getPriorities() {
-        return new Priorities(Priority.NORMAL, Priority.LOW);
+        return new Priorities(
+            Priority.NORMAL,
+            Priority.LOW
+        );
     }
 
     @Override
     public boolean accept() {
-        return !BankNode.FightTile.getArea(25).contains(getLocalPlayer());
+        return !BankNode
+                .FightTile
+                .getArea(25)
+                .contains(getLocalPlayer());
     }
 
     @Override

@@ -22,7 +22,7 @@ public class BankNode extends PriorityNode {
     @Override
     public boolean accept() {
         return GUI.state.isShouldEat()
-                && getInventory().all(item -> item != null && item.getName().contains("Salmon")).isEmpty();
+                && getInventory().all(item -> item != null && item.getName().contains(GUI.state.getFoodName())).isEmpty();
     }
 
     @Override
@@ -44,9 +44,17 @@ public class BankNode extends PriorityNode {
 
         if (getWalking().walk(getBank().getClosestBankLocation().getCenter())) {
             if (getBank().openClosest()) {
-                if (getBank().withdrawAll(item -> item != null && item.getName().contains("Salmon"))) {
+                if (getBank().withdrawAll(item -> item != null
+                        && item.getName().contains(GUI.state.getFoodName()))) {
+                    getBank().close();
                     // Walk back to the fighting area
                     getWalking().walk(FightTile);
+                } else {
+                    log("No More Food :(");
+                    if (getBank().close()) {
+                        getTabs().logout();
+                        GUI.state.getScriptInstance().stop();
+                    }
                 }
             }
         }

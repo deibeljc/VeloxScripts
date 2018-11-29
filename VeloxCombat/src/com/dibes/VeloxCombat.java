@@ -11,11 +11,9 @@ import com.dibes.walking.WalkNode;
 import org.dreambot.api.methods.skills.Skill;
 import org.dreambot.api.script.Category;
 import org.dreambot.api.script.ScriptManifest;
-import org.dreambot.api.script.TaskNode;
 import org.dreambot.api.script.impl.TaskScript;
 
 import java.awt.*;
-import java.awt.event.WindowEvent;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
@@ -25,14 +23,14 @@ import java.util.concurrent.TimeUnit;
  * Have a simple AIO main.combat bot that does the following:
  * X Attack enemies it can path to
  *      X Possibly open doors in the way
- * - Eat main.inventory in a reasonable manner
+ * - Eat main inventory in a reasonable manner
  * X Be AFKish while fighting, similar to a real person
  *      - Move mouse off screen sometimes
  * X Bank for more main.inventory
  *      X Handles closed door in the way of path
  *
  * Stretch Goal:
- *  - Auto switch between main.combat styles
+ *  - Auto switch between main combat styles
  *
  * ---
  * GUI: Selecting enemies, selecting loot options, creating a custom path, etc, etc.
@@ -61,6 +59,7 @@ public class VeloxCombat extends TaskScript {
         // Show the gui.
         gui = new GUI(this);
         gui.setVisible(true);
+        GUI.state.setScriptInstance(this);
         getSkillTracker().start();
         addNodes(new GuiNode());
     }

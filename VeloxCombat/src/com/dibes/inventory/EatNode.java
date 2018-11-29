@@ -12,14 +12,19 @@ public class EatNode extends PriorityNode {
 
     @Override
     public Priorities getPriorities() {
-        return new Priorities(Priority.NORMAL, Priority.NORMAL);
+        return new Priorities(
+            Priority.NORMAL,
+            Priority.NORMAL
+        );
     }
 
     @Override
     public boolean accept() {
-        foodItem = getInventory().get(item -> item != null && item.getName().contains("Salmon"));
+        foodItem = getInventory().get(item -> item != null
+                && item.getName().contains(GUI.state.getFoodName()));
+
         return foodItem != null
-                && getLocalPlayer().getHealthPercent() <= 50
+                && getLocalPlayer().getHealthPercent() <= GUI.state.getEatPercent()
                 && GUI.state.isShouldEat();
     }
 

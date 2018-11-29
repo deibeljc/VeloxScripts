@@ -5,6 +5,10 @@ import javax.swing.*;
 import com.dibes.VeloxCombat;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 public class GUI extends JFrame {
     // So we can have a
@@ -66,18 +70,59 @@ public class GUI extends JFrame {
     }
 
     private JPanel getEatPanel() {
+        Dimension size;
+
         JPanel eatPanel = new JPanel(false);
-        eatPanel.setLayout(new GridLayout(1, 1));
+        eatPanel.setLayout(null);
 
         JCheckBox shouldEat = new JCheckBox("Should Eat");
         shouldEat.setSelected(false);
         shouldEat.addActionListener(e -> state.setShouldEat(shouldEat.isSelected()));
+        size = shouldEat.getPreferredSize();
+        shouldEat.setBounds(10, 10, size.width, size.height);
+
 
         JSlider eatSlider = new JSlider(10, 100, 40);
+        eatSlider.setPaintTicks(true);
+        eatSlider.setPaintLabels(true);
+        eatSlider.setMajorTickSpacing(20);
+        eatSlider.setMinorTickSpacing(5);
+        eatSlider.addChangeListener(e -> state.setEatPercent(eatSlider.getValue()));
+        size = eatSlider.getPreferredSize();
+        eatSlider.setBounds(100, 13, 200, size.height);
+
+        JLabel foodNameLabel = new JLabel("Food name");
+        size = foodNameLabel.getPreferredSize();
+        foodNameLabel.setBounds(10, 70, size.width, size.height);
+
+        JTextField foodName = new JTextField(30);
+        foodName.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (e.getKeyChar() == '\b') {
+                    state.setFoodName(
+                        foodName.getText().substring(0, foodName.getText().length() - 2)
+                    );
+                } else {
+                    state.setFoodName(foodName.getText() + e.getKeyChar());
+                }
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        });
+        size = foodName.getPreferredSize();
+        foodName.setBounds(100, 70, 200, size.height);
 
         eatPanel.add(shouldEat);
         eatPanel.add(eatSlider);
-
+        eatPanel.add(foodNameLabel);
+        eatPanel.add(foodName);
 
         return eatPanel;
     }

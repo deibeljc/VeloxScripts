@@ -1,5 +1,6 @@
 package com.dibes.gui;
 
+import org.dreambot.api.script.impl.TaskScript;
 import org.dreambot.api.wrappers.interactive.NPC;
 
 import javax.swing.*;
@@ -9,10 +10,13 @@ import java.util.List;
 public class State {
     private boolean scriptStarted = false;
     private boolean shouldEat = false;
+    private String foodName = "";
+    private int eatPercent = 0;
     private ListModel npcListModel = new DefaultListModel();
     private ListModel selectedNpcListModel = new DefaultListModel();
     private HashSet<String> npcSet = new HashSet<>();
     private HashSet<String> selectedNpcSet = new HashSet<>();
+    private TaskScript scriptInstance = null;
 
     public boolean isScriptStarted() {
         return scriptStarted;
@@ -58,5 +62,29 @@ public class State {
 
     public void setShouldEat(boolean shouldEat) {
         this.shouldEat = shouldEat;
+    }
+
+    public String getFoodName() {
+        return foodName;
+    }
+
+    public void setFoodName(String foodName) {
+        this.foodName = foodName;
+    }
+
+    public int getEatPercent() {
+        return eatPercent;
+    }
+
+    public void setEatPercent(int eatPercent) {
+        this.eatPercent = eatPercent;
+    }
+
+    public TaskScript getScriptInstance() {
+        return scriptInstance;
+    }
+
+    public void setScriptInstance(TaskScript scriptInstance) {
+        this.scriptInstance = scriptInstance;
     }
 }
