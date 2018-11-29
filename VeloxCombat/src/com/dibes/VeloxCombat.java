@@ -23,14 +23,17 @@ import java.util.concurrent.TimeUnit;
  * Have a simple AIO main.combat bot that does the following:
  * X Attack enemies it can path to
  *      X Possibly open doors in the way
- * - Eat main inventory in a reasonable manner
+ * X Eat main inventory in a reasonable manner
+ *      - Eat anything that classifies as food
  * X Be AFKish while fighting, similar to a real person
- *      - Move mouse off screen sometimes
- * X Bank for more main.inventory
+ *      X Move mouse off screen sometimes
+ * X Bank for more food
  *      X Handles closed door in the way of path
  *
  * Stretch Goal:
  *  - Auto switch between main combat styles
+ *  - Auto move to next area
+ *  - Auto buy more food
  *
  * ---
  * GUI: Selecting enemies, selecting loot options, creating a custom path, etc, etc.
