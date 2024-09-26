@@ -1,3 +1,5 @@
 dependencies {
-    implementation(project(":libraries:my-library"))
+  implementation(project(":libraries:statemachine"))
+  implementation(project(":libraries:utils"))
+  implementation(project(":libraries:gui"))
 }

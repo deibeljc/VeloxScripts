@@ -1,6 +1,7 @@
 package scripts
 
 import java.awt.Color
+import kotlinx.coroutines.runBlocking
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.ScriptListening
 import org.tribot.script.sdk.frameworks.behaviortree.*
@@ -14,6 +15,7 @@ import org.tribot.script.sdk.script.TribotScript
 import org.tribot.script.sdk.script.TribotScriptManifest
 import scripts.behaviors.combatState
 import scripts.behaviors.stateMachine
+import scripts.gui.VeloxCombatGUIState
 import scripts.statemachine.StateMachineVisualizer
 
 @TribotScriptManifest(
@@ -81,25 +83,49 @@ class VeloxCombat : TribotScript {
     return paint
   }
 
+  private fun parseArgs(args: String) {
+    args.split(",").forEach { arg ->
+      val (setting, value) = arg.split(":").map { it.trim() }
+      when (setting.lowercase()) {
+        "eathealth" -> VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
+        "eattofull" -> VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
+      }
+    }
+  }
+
   override fun execute(args: String) {
+    // Parse args and update GUI state
+    parseArgs(args)
+
     val renderer = StateMachineVisualizer(stateMachine)
 
+    // Set up paint rendering
     Painting.addPaint { g ->
       paint.render(g)
       renderer.render(g, 1000, 1000)
     }
+
     ScriptListening.addPreEndingListener(
         Runnable {
-          shouldRun = false
+          VeloxCombatGUIState.closeGUI()
+          VeloxCombatGUIState.stopRunning()
           Log.info("Script is ending")
         })
 
     stateMachine.setInitialState(combatState)
 
-    while (shouldRun) {
-      paint = setupPaint()
-      stateMachine.step()
-      lastFrameTime = System.currentTimeMillis()
+    // Launch Jetpack Compose GUI
+    VeloxCombatGUIState.launchGUI()
+
+    // Main script loop
+    runBlocking {
+      while (VeloxCombatGUIState.shouldRun) {
+        if (VeloxCombatGUIState.isRunning.value) {
+          paint = setupPaint()
+          stateMachine.step()
+          lastFrameTime = System.currentTimeMillis()
+        }
+      }
     }
   }
 }

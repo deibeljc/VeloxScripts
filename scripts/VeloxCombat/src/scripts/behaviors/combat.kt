@@ -10,6 +10,7 @@ import scripts.CombatHelper
 import scripts.InventoryHelper
 import scripts.Locations
 import scripts.MonsterArea
+import scripts.gui.VeloxCombatGUIState
 import scripts.updateState
 
 fun IParentNode.combatNode() = sequence {
@@ -45,8 +46,18 @@ fun IParentNode.lootCoins() = selector {
 
 fun IParentNode.eatFood() = sequence {
   selector {
-    condition("Health Below 50%") { MyPlayer.getCurrentHealthPercent() > 50 }
-    perform("Eat Food") { InventoryHelper.eatFood() }
+    condition("Health Below Eat Percentage or Eat to Full") {
+      MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value
+    }
+    // Eat food until we are above the eat health percentage or we are eating to full depending on
+    // the setting
+    repeatUntil({
+      MyPlayer.getCurrentHealthPercent() == 100.0 && VeloxCombatGUIState.eatToFull.value ||
+          (!VeloxCombatGUIState.eatToFull.value &&
+              MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value)
+    }) {
+      perform("Eat Food") { InventoryHelper.eatFood() }
+    }
   }
 }
 
