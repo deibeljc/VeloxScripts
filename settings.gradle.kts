@@ -1,8 +1,8 @@
-rootProject.name = "tribot-script-template"
+rootProject.name = "VeloxScripts"
 
 include("libraries:my-library")
 
-include("scripts:my-script")
+include("scripts:veloxcombat")
 include("scripts")
 
 pluginManagement {
