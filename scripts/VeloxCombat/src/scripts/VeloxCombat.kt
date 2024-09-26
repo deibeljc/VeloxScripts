@@ -4,6 +4,7 @@ import java.awt.Color
 import kotlinx.coroutines.runBlocking
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.ScriptListening
+import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.frameworks.behaviortree.*
 import org.tribot.script.sdk.painting.Painting
 import org.tribot.script.sdk.painting.template.basic.BasicPaintTemplate
@@ -83,12 +84,21 @@ class VeloxCombat : TribotScript {
     return paint
   }
 
-  private fun parseArgs(args: String) {
+  private fun parseArgs(args: String?) {
+    if (args.isNullOrEmpty()) return
+
+    Log.info("Parsing args: $args")
+
     args.split(",").forEach { arg ->
-      val (setting, value) = arg.split(":").map { it.trim() }
-      when (setting.lowercase()) {
-        "eathealth" -> VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
-        "eattofull" -> VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
+      val parts = arg.split(":")
+      if (parts.size == 2) {
+        val (setting, value) = parts.map { it.trim() }
+        when (setting.lowercase()) {
+          "eathealth" ->
+              VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
+          "eattofull" ->
+              VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
+        }
       }
     }
   }
@@ -124,6 +134,9 @@ class VeloxCombat : TribotScript {
           paint = setupPaint()
           stateMachine.step()
           lastFrameTime = System.currentTimeMillis()
+        } else {
+          // Don't needlessly eat CPU cycles while waiting
+          Waiting.wait(50)
         }
       }
     }
