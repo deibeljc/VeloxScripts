@@ -19,7 +19,7 @@ fun IParentNode.combatNode() = sequence {
   val trainingArea = Locations.getBestTrainingArea()
   walk(trainingArea.area ?: Area.fromPolygon(), trainingArea.name)
   eatFood()
-  lootCoins()
+  loot()
   fightNearestEnemy(trainingArea)
 }
 
@@ -30,16 +30,19 @@ fun IParentNode.balanceCombatStyle() = sequence {
   }
 }
 
-fun IParentNode.lootCoins() = selector {
+fun IParentNode.loot() = selector {
+  val itemsToLoot = VeloxCombatGUIState.lootItems.map { it.lowercase() }
   // Ensure there are coins on the ground
-  condition("Has Coins") { Query.groundItems().nameContains("Coins").count() == 0 }
-  perform("Loot Coins") {
-    val coins = Query.groundItems().nameContains("Coins").findBestInteractable()
-    val numCoins = Query.groundItems().nameContains("Coins").count()
-    if (coins.isPresent) {
-      coins.get().interact("Take")
+  condition("Has Loot") {
+    Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() == 0
+  }
+  perform("Loot Item") {
+    val loot =
+        Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.findBestInteractable()
+    if (loot.isPresent) {
+      loot.get().interact("Take")
       // Wait until it is looted
-      Waiting.waitUntil { numCoins > Query.groundItems().nameContains("Coins").count() }
+      Waiting.waitUntil { !Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.findBestInteractable().isPresent }
     }
   }
 }
