@@ -6,13 +6,20 @@ import org.tribot.script.sdk.Skill
 class ExperienceTracker {
   private val skillTrackers = mutableMapOf<Skill, SkillTracker>()
   private var lastUpdateTime: Instant = Instant.now()
+  private val newSkillListeners = mutableListOf<(Skill) -> Unit>()
 
   fun update() {
     val currentTime = Instant.now()
     Skill.values().forEach { skill ->
       val currentXp = skill.getXp()
       val tracker = skillTrackers.getOrPut(skill) { SkillTracker(skill, currentXp) }
-      tracker.update(currentXp, currentTime)
+      val hasGainedXp = tracker.update(currentXp, currentTime)
+
+      // Notify listeners when a new skill is tracked and has gained XP
+      if (hasGainedXp && tracker.isNewlyTracked) {
+        newSkillListeners.forEach { listener -> listener(skill) }
+        tracker.isNewlyTracked = false
+      }
     }
     lastUpdateTime = currentTime
   }
@@ -46,9 +53,11 @@ class ExperienceTracker {
     private var currentXp: Int = initialXp
     private var startTime: Instant = Instant.now()
     private var xpHistory: MutableList<Pair<Instant, Int>> = mutableListOf()
+    var isNewlyTracked: Boolean = true
 
-    fun update(newXp: Int, currentTime: Instant) {
-      if (newXp != currentXp) {
+    fun update(newXp: Int, currentTime: Instant): Boolean {
+      val hasGainedXp = newXp > currentXp
+      if (hasGainedXp) {
         lastXp = currentXp
         currentXp = newXp
         xpHistory.add(currentTime to newXp)
@@ -58,6 +67,7 @@ class ExperienceTracker {
                 .dropWhile { it.first.isBefore(currentTime.minusSeconds(3600)) }
                 .toMutableList()
       }
+      return hasGainedXp
     }
 
     fun hasChanged(): Boolean = currentXp != lastXp
@@ -89,4 +99,14 @@ class ExperienceTracker {
       val xpPerHour: Double,
       val xpHistory: List<Pair<Instant, Int>>
   )
+
+  // Add this new method to register listeners
+  fun addNewSkillListener(listener: (Skill) -> Unit) {
+    newSkillListeners.add(listener)
+  }
+
+  // Add this new method to remove listeners if needed
+  fun removeNewSkillListener(listener: (Skill) -> Unit) {
+    newSkillListeners.remove(listener)
+  }
 }

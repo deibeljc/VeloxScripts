@@ -1,4 +1,4 @@
-package scripts.utils
+package scripts.utils.viz
 
 import java.awt.Color
 import java.awt.Font

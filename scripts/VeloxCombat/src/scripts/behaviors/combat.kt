@@ -1,7 +1,6 @@
 package scripts.behaviors
 
 import org.tribot.script.sdk.Combat
-import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.MyPlayer
 import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.frameworks.behaviortree.*
@@ -45,7 +44,6 @@ fun IParentNode.loot() = selector {
         lastEnemy?.isValid == true
   }
   perform("Loot Item") {
-    Log.info("Is last enemy valid? ${lastEnemy?.isValid}")
     // If lastEnemy is valid, wait for ground items to be on their tile
     if (lastEnemy?.isValid == false) {
       Waiting.waitUntil(2000) {
