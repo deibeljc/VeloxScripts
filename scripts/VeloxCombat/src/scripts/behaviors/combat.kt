@@ -57,8 +57,8 @@ fun IParentNode.loot() = sequence {
         Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.findBestInteractable()
     if (loot.isPresent) {
       loot.get().interact("Take")
-      // Wait until it is looted
-      Waiting.waitUntil {
+      // Wait until it is looted, max out 1.5 seconds
+      Waiting.waitUntil(1500) {
         !Query.groundItems()
             .filter { it.name.lowercase() in itemsToLoot }
             .findBestInteractable()
@@ -85,14 +85,8 @@ fun IParentNode.eatFood() = sequence {
   }
 }
 
-fun IParentNode.fightNearestEnemy(trainingArea: MonsterArea?) = sequence {
-  selector {
-    // Don't get an enemy if we are already in combat or if there are coins to be looted
-    condition("Wait Until In Combat") {
-      CombatHelper.isInCombat() ||
-          Query.groundItems().nameContains("Coins").count() > 0 ||
-          lastEnemy?.isValid == true
-    }
-    perform("Fight Nearest Enemy") { lastEnemy = CombatHelper.fightNearestEnemy(trainingArea) }
-  }
+fun IParentNode.fightNearestEnemy(trainingArea: MonsterArea?) = selector {
+  // Don't get an enemy if we are already in combat or if there are coins to be looted
+  condition("Wait Until In Combat") { CombatHelper.isInCombat() || lastEnemy?.isValid == true }
+  perform("Fight Nearest Enemy") { lastEnemy = CombatHelper.fightNearestEnemy(trainingArea) }
 }
