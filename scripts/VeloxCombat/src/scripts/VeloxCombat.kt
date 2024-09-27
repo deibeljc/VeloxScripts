@@ -2,9 +2,6 @@ package scripts
 
 import dax.api_lib.DaxWalker
 import dax.teleports.Teleport
-import java.awt.Color
-import java.awt.Graphics
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.ScriptListening
@@ -16,21 +13,20 @@ import org.tribot.script.sdk.script.TribotScriptManifest
 import scripts.behaviors.initState
 import scripts.behaviors.stateMachine
 import scripts.gui.VeloxCombatGUIState
-import scripts.utils.ExperienceTracker
 import scripts.utils.viz.ProgressBar
+import java.awt.Color
+import java.awt.Graphics
+import java.util.concurrent.atomic.AtomicReference
 
 @TribotScriptManifest(
-    name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script.")
+  name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script."
+)
 class VeloxCombat : TribotScript {
-  // Constants
-  private val PAINT_UPDATE_INTERVAL = 200L
-
   // Properties
   private val experienceTracker = ExperienceTracker()
   private var lastFrameTime: Long = System.currentTimeMillis()
   private val paintJob = AtomicReference<Job?>(null)
   private val coroutineScope = CoroutineScope(Dispatchers.Default)
-  private val xpGainedPerHour = mutableListOf<Pair<Double, Double>>()
   private var startTime: Long = System.currentTimeMillis()
   private var lastUpdateTime: Long = 0
 
@@ -74,11 +70,11 @@ class VeloxCombat : TribotScript {
 
   private fun setupScriptListeners() {
     ScriptListening.addPreEndingListener(
-        Runnable {
-          VeloxCombatGUIState.closeGUI()
-          VeloxCombatGUIState.stopRunning()
-          Log.info("Script is ending")
-        })
+      Runnable {
+        VeloxCombatGUIState.closeGUI()
+        VeloxCombatGUIState.stopRunning()
+        Log.info("Script is ending")
+      })
   }
 
   private fun runMainLoop() {
@@ -114,10 +110,10 @@ class VeloxCombat : TribotScript {
         val (setting, value) = parts.map { it.trim() }
         when (setting.lowercase()) {
           "eathealth" ->
-              VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
+            VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
 
           "eattofull" ->
-              VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
+            VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
         }
       }
     }

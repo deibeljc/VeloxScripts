@@ -1,14 +1,13 @@
 package scripts
 
-import java.awt.Color
-import java.awt.Graphics
 import kotlinx.coroutines.*
 import org.tribot.script.sdk.painting.Painting
 import org.tribot.script.sdk.painting.template.basic.BasicPaintTemplate
 import org.tribot.script.sdk.painting.template.basic.PaintLocation
 import org.tribot.script.sdk.painting.template.basic.PaintRows
 import org.tribot.script.sdk.painting.template.basic.PaintTextRow
-import scripts.utils.ExperienceTracker
+import java.awt.Color
+import java.awt.Graphics
 
 class PaintManager(private val experienceTracker: ExperienceTracker) {
   private val PAINT_UPDATE_INTERVAL = 16L
@@ -25,12 +24,12 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
   private val FRAME_TIME = 1000L / TARGET_FPS
 
   data class RenderItem(
-      var renderFunction: (Graphics, Float, Float, Float) -> Unit,
-      var width: Int,
-      var height: Int,
-      var y: Float,
-      var alpha: Float = 0f,
-      var targetY: Float = 0f
+    var renderFunction: (Graphics, Float, Float, Float) -> Unit,
+    var width: Int,
+    var height: Int,
+    var y: Float,
+    var alpha: Float = 0f,
+    var targetY: Float = 0f
   )
 
   fun setupPaint() {
@@ -64,28 +63,31 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
 
   private fun setupPaintBuilder(): BasicPaintTemplate.BasicPaintTemplateBuilder {
     paint =
-        BasicPaintTemplate.builder()
-            .row(PaintRows.runtime(template.toBuilder()))
-            .row(PaintRows.scriptName(template.toBuilder()))
-            .row(
-                template
-                    .toBuilder()
-                    .label("Script State")
-                    .value(VeloxState.getStateHistories())
-                    .build())
-            .row(
-                template
-                    .toBuilder()
-                    .label("Location")
-                    .value(Locations.getBestTrainingArea().name)
-                    .build())
-            .row(
-                template
-                    .toBuilder()
-                    .label("Monster to fight")
-                    .value(Locations.getBestTrainingArea().monsters.joinToString(", "))
-                    .build())
-            .location(PaintLocation.BOTTOM_LEFT_VIEWPORT)
+      BasicPaintTemplate.builder()
+        .row(PaintRows.runtime(template.toBuilder()))
+        .row(PaintRows.scriptName(template.toBuilder()))
+        .row(
+          template
+            .toBuilder()
+            .label("Script State")
+            .value(VeloxState.getStateHistories())
+            .build()
+        )
+        .row(
+          template
+            .toBuilder()
+            .label("Location")
+            .value(Locations.getBestTrainingArea().name)
+            .build()
+        )
+        .row(
+          template
+            .toBuilder()
+            .label("Monster to fight")
+            .value(Locations.getBestTrainingArea().monsters.joinToString(", "))
+            .build()
+        )
+        .location(PaintLocation.BOTTOM_LEFT_VIEWPORT)
 
     return paint
   }
@@ -114,10 +116,10 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
   }
 
   fun pushToRenderStack(
-      key: String,
-      renderFunction: (Graphics, Float, Float, Float) -> Unit,
-      width: Int,
-      height: Int
+    key: String,
+    renderFunction: (Graphics, Float, Float, Float) -> Unit,
+    width: Int,
+    height: Int
   ) {
     if (key in renderStack) {
       // Update existing item

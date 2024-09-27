@@ -1,7 +1,7 @@
-package scripts.utils
+package scripts
 
-import java.time.Instant
 import org.tribot.script.sdk.Skill
+import java.time.Instant
 
 class ExperienceTracker {
   private val skillTrackers = mutableMapOf<Skill, SkillTracker>()
@@ -43,13 +43,13 @@ class ExperienceTracker {
   }
 
   fun getXpToNextLevel(skill: Skill): Int? {
-    return skill.getCurrentXpToNextLevel()
+    return skill.currentXpToNextLevel
   }
 
   fun getTimeToNextLevel(skill: Skill): Double? {
     val tracker = skillTrackers[skill] ?: return null
     val stats = tracker.getStats()
-    val xpToNextLevel = skill.getCurrentXpToNextLevel()
+    val xpToNextLevel = skill.currentXpToNextLevel
     return if (stats.xpPerHour > 0) {
       (xpToNextLevel / stats.xpPerHour) * 3600 // Convert hours to seconds
     } else {
@@ -71,6 +71,7 @@ class ExperienceTracker {
     var isNewlyTracked: Boolean = true
     var wasInactive: Boolean = false
 
+
     fun update(newXp: Int, currentTime: Instant): Boolean {
       val hasGainedXp = newXp > currentXp
       if (hasGainedXp) {
@@ -81,9 +82,9 @@ class ExperienceTracker {
         xpHistory.add(currentTime to newXp)
         // Keep only the last hour of data
         xpHistory =
-            xpHistory
-                .dropWhile { it.first.isBefore(currentTime.minusSeconds(3600)) }
-                .toMutableList()
+          xpHistory
+            .dropWhile { it.first.isBefore(currentTime.minusSeconds(3600)) }
+            .toMutableList()
       }
       return hasGainedXp
     }
@@ -99,42 +100,40 @@ class ExperienceTracker {
       val recentChange = currentXp - lastXp
       val duration = java.time.Duration.between(startTime, Instant.now())
       val xpPerHour =
-          if (duration.seconds > 0) {
-            totalChange.toDouble() / duration.seconds * 3600
-          } else {
-            0.0
-          }
+        if (duration.seconds > 0) {
+          totalChange.toDouble() / duration.seconds * 3600
+        } else {
+          0.0
+        }
 
       return SkillStats(
-          skill = skill,
-          totalChange = totalChange,
-          recentChange = recentChange,
-          xpPerHour = xpPerHour,
-          xpHistory = xpHistory.toList(),
-          isInactive = isInactive(Instant.now()))
+        skill = skill,
+        totalChange = totalChange,
+        recentChange = recentChange,
+        xpPerHour = xpPerHour,
+        xpHistory = xpHistory.toList(),
+        isInactive = isInactive(Instant.now())
+      )
     }
   }
 
   data class SkillStats(
-      val skill: Skill,
-      val totalChange: Int,
-      val recentChange: Int,
-      val xpPerHour: Double,
-      val xpHistory: List<Pair<Instant, Int>>,
-      val isInactive: Boolean
+    val skill: Skill,
+    val totalChange: Int,
+    val recentChange: Int,
+    val xpPerHour: Double,
+    val xpHistory: List<Pair<Instant, Int>>,
+    val isInactive: Boolean
   )
 
-  // Add this new method to register listeners
   fun addNewSkillListener(listener: (Skill) -> Unit) {
     newSkillListeners.add(listener)
   }
 
-  // Add this new method to remove listeners if needed
   fun removeNewSkillListener(listener: (Skill) -> Unit) {
     newSkillListeners.remove(listener)
   }
 
-  // Add these new methods to manage inactivity status listeners
   fun addInactivityStatusListener(skill: Skill, listener: (Boolean) -> Unit) {
     inactivityStatusListeners.getOrPut(skill) { mutableListOf() }.add(listener)
   }

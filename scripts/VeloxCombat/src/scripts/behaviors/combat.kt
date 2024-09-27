@@ -15,6 +15,7 @@ var lastEnemy: Npc? = null
 fun IParentNode.combatNode() = sequence {
   updateState("Combat")
   balanceCombatStyle()
+  resetLastEnemy()
   val trainingArea = Locations.getBestTrainingArea()
   walk(trainingArea.area ?: Area.fromPolygon(), trainingArea.name)
   eatFood()
@@ -24,7 +25,7 @@ fun IParentNode.combatNode() = sequence {
   }
 }
 
-fun IParentNode.resetLastEnemy() {
+fun IParentNode.resetLastEnemy() = perform {
   // If last enemy is not targeting us, reset it
   if (lastEnemy?.isInteractingWithMe() == false) {
     lastEnemy = null
@@ -42,8 +43,8 @@ fun IParentNode.loot() = sequence {
   val itemsToLoot = VeloxCombatGUIState.lootItems.map { it.lowercase() }
   // Ensure there are coins on the ground
   condition("Has Loot") {
-    Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() > 0 ||
-        lastEnemy?.isValid == true
+    (Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() > 0 ||
+        lastEnemy?.isValid == true) && !CombatHelper.isInCombat()
   }
   perform("Loot Item") {
     // If lastEnemy is valid, wait for ground items to be on their tile
