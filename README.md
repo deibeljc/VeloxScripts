@@ -26,41 +26,41 @@ VeloxCombat is an advanced combat training script for Old School RuneScape (OSRS
 
 ## Script Logic Structure
 
+### Top level state machine
+
 ```mermaid
 graph LR
-    A[Start] --> B{State Machine}
-    B --> |Init State| C[Init Node]
-    B --> |Combat State| D[Combat Node]
-    B --> |Fish State| E[Fish Node]
-    B --> |Cook State| F[Cook Node]
-    B --> |Bank State| G[Bank Node]
+    A[Init State] -->|Has Required Items| B[Combat State]
+    B -->|No Food| C[Fish State]
+    B -->|Inventory Full| D[Bank State]
+    D -->|Inventory Not Full| B
+    C -->|Has Raw Food >= 10| E[Cook State]
+    E -->|Has Food & No Raw Food| B
 
-    C --> |Behavior Tree| H[Init Behavior Tree]
-    D --> |Behavior Tree| I[Combat Behavior Tree]
-    E --> |Behavior Tree| J[Fish Behavior Tree]
-    F --> |Behavior Tree| K[Cook Behavior Tree]
-    G --> |Behavior Tree| L[Bank Behavior Tree]
+```
 
-    H --> M[Open Bank]
-    H --> N[Withdraw Items]
+### Behavior Tree
 
-    I --> O[Balance Combat Style]
-    I --> P[Walk to Training Area]
-    I --> Q[Eat Food]
-    I --> R[Loot]
-    I --> S[Fight Nearest Enemy]
+```mermaid
+graph LR
+    A[Init Node] --> B[Open Bank]
+    A --> C[Withdraw Items]
 
-    J --> T[Walk to Fishing Spot]
-    J --> U[Fish]
+    D[Combat Node] --> E[Balance Combat Style]
+    D --> F[Walk to Training Area]
+    D --> G[Eat Food]
+    D --> H[Loot]
+    D --> I[Fight Nearest Enemy]
 
-    K --> V[Ensure Fire Exists]
-    K --> W[Cook Food]
-    K --> X[Drop Burnt Food]
+    J[Fish Node] --> K[Walk to Fishing Spot]
+    J --> L[Fish]
 
-    L --> Y[Open Bank]
-    L --> Z[Deposit Items]
+    M[Cook Node] --> N[Ensure Fire Exists]
+    M --> O[Cook Food]
+    M --> P[Drop Burnt Food]
 
-    B --> |Transitions| B
+    Q[Bank Node] --> R[Open Bank]
+    Q --> S[Deposit Items]
 ```
 
 ### Combat
