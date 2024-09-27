@@ -3,13 +3,12 @@ package scripts.utils.viz
 import java.awt.AlphaComposite
 import java.awt.BasicStroke
 import java.awt.Color
-import java.awt.FontMetrics
+import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.font.TextLayout
 import java.awt.geom.AffineTransform
-import java.awt.geom.Rectangle2D
 
 class ProgressBar(
     private val width: Int,
@@ -52,28 +51,39 @@ class ProgressBar(
 
     // Set up for text drawing
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g2d.setRenderingHint(
-        RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON)
+    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
 
-    val fontMetrics: FontMetrics = g.fontMetrics
-    val labelBounds: Rectangle2D = fontMetrics.getStringBounds(label, g)
-    val labelX = x + (width - labelBounds.width.toInt()) / 2
-    val labelY = y + (height - fontMetrics.descent + fontMetrics.ascent) / 2
+    val frc = g2d.fontRenderContext
+    val f = Font("Helvetica", Font.BOLD, 12)
+    val textTl = TextLayout(label, f, frc)
+    val outline = textTl.getOutline(null)
+    val outlineBounds = outline.bounds
 
-    // Create TextLayout and get the outline
-    val textLayout = TextLayout(label, g2d.font, g2d.fontRenderContext)
-    val outline =
-        textLayout.getOutline(
-            AffineTransform.getTranslateInstance(labelX.toDouble(), labelY.toDouble()))
+    // Save the current transform
+    val originalTransform = g2d.transform
+
+    // Create a new transform for the text
+    val textTransform = AffineTransform()
+    textTransform.translate(
+        x + width / 2 - (outlineBounds.width / 2).toDouble(),
+        y + height / 2 + (outlineBounds.height / 2).toDouble())
+    g2d.transform = textTransform
+
+    // Set the outline stroke width
+    val outlineStroke = BasicStroke(2f) // Adjust this value to change the outline thickness
+    g2d.stroke = outlineStroke
 
     // Draw the outline (stroke)
     g2d.color = Color.BLACK
-    g2d.stroke = BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND)
     g2d.draw(outline)
 
     // Fill the text
     g2d.color = Color.WHITE
     g2d.fill(outline)
+
+    // Restore the original transform and stroke
+    g2d.transform = originalTransform
+    g2d.stroke = BasicStroke() // Reset to default stroke
 
     g2d.composite = originalComposite
   }
