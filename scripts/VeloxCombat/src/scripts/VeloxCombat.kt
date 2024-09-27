@@ -20,7 +20,6 @@ import scripts.behaviors.initState
 import scripts.behaviors.stateMachine
 import scripts.gui.VeloxCombatGUIState
 import scripts.utils.ExperienceTracker
-import scripts.utils.LineChart
 
 @TribotScriptManifest(
     name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script.")
@@ -32,7 +31,6 @@ class VeloxCombat : TribotScript {
 
   // Properties
   private val experienceTracker = ExperienceTracker()
-  private var chart: LineChart? = null
   private val template = PaintTextRow.builder().background(Color.blue.darker()).build()
   private var lastFrameTime: Long = System.currentTimeMillis()
   private val paintJob = AtomicReference<Job?>(null)
@@ -205,7 +203,6 @@ class VeloxCombat : TribotScript {
       val xpStatsString =
           "XP/Hour: $xpPerHourString, XP to Next Level: $xpToNextLevelString, Time to Next Level: $timeToNextLevelString"
 
-      chart?.setData(xpGainedPerHour)
       paint.row(template.toBuilder().label(skill.name).value(xpStatsString).build())
     }
 
