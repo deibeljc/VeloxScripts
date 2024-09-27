@@ -2,6 +2,9 @@ package scripts
 
 import dax.api_lib.DaxWalker
 import dax.teleports.Teleport
+import java.awt.Color
+import java.awt.Graphics
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.ScriptListening
@@ -15,13 +18,9 @@ import scripts.behaviors.stateMachine
 import scripts.gui.VeloxCombatGUIState
 import scripts.utils.ExperienceTracker
 import scripts.utils.viz.ProgressBar
-import java.awt.Color
-import java.awt.Graphics
-import java.util.concurrent.atomic.AtomicReference
 
 @TribotScriptManifest(
-  name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script."
-)
+    name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script.")
 class VeloxCombat : TribotScript {
   // Constants
   private val PAINT_UPDATE_INTERVAL = 200L
@@ -75,11 +74,11 @@ class VeloxCombat : TribotScript {
 
   private fun setupScriptListeners() {
     ScriptListening.addPreEndingListener(
-      Runnable {
-        VeloxCombatGUIState.closeGUI()
-        VeloxCombatGUIState.stopRunning()
-        Log.info("Script is ending")
-      })
+        Runnable {
+          VeloxCombatGUIState.closeGUI()
+          VeloxCombatGUIState.stopRunning()
+          Log.info("Script is ending")
+        })
   }
 
   private fun runMainLoop() {
@@ -115,10 +114,10 @@ class VeloxCombat : TribotScript {
         val (setting, value) = parts.map { it.trim() }
         when (setting.lowercase()) {
           "eathealth" ->
-            VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
+              VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
 
           "eattofull" ->
-            VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
+              VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
         }
       }
     }
@@ -146,6 +145,17 @@ class VeloxCombat : TribotScript {
 
       skillProgressBars[skill] = progressBarRender
       paintManager.pushToRenderStack(skill.name, progressBarRender, 200, height)
+
+      // Add inactivity status listener
+      experienceTracker.addInactivityStatusListener(skill) { isInactive ->
+        if (isInactive) {
+          paintManager.removeFromRenderStack(skill.name)
+          Log.info("Removed ${skill.name} from render stack due to inactivity")
+        } else {
+          paintManager.pushToRenderStack(skill.name, skillProgressBars[skill]!!, 200, height)
+          Log.info("Added ${skill.name} back to render stack due to activity")
+        }
+      }
     }
 
     // Add listener for new skills

@@ -18,8 +18,10 @@ fun IParentNode.combatNode() = sequence {
   val trainingArea = Locations.getBestTrainingArea()
   walk(trainingArea.area ?: Area.fromPolygon(), trainingArea.name)
   eatFood()
-  loot()
-  fightNearestEnemy(trainingArea)
+  selector {
+    loot()
+    fightNearestEnemy(trainingArea)
+  }
 }
 
 fun IParentNode.resetLastEnemy() {
@@ -36,11 +38,11 @@ fun IParentNode.balanceCombatStyle() = sequence {
   }
 }
 
-fun IParentNode.loot() = selector {
+fun IParentNode.loot() = sequence {
   val itemsToLoot = VeloxCombatGUIState.lootItems.map { it.lowercase() }
   // Ensure there are coins on the ground
   condition("Has Loot") {
-    Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() == 0 &&
+    Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() > 0 ||
         lastEnemy?.isValid == true
   }
   perform("Loot Item") {

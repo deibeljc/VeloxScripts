@@ -136,4 +136,9 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
       }
     }
   }
+
+  fun removeFromRenderStack(key: String) {
+    renderStack.remove(key)
+    renderOrder.remove(key)
+  }
 }
