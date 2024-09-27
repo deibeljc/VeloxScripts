@@ -39,24 +39,17 @@ class InventoryHelper {
     }
 
     fun hasNonFood(): Boolean {
-      return Query.inventory()
-          .filter { item ->
-            requiredItemsToHave.any { sublist ->
-              sublist.any { item.name.lowercase().contains(it) }
-            }
-          }
-          .count() > 0
+      return Query.inventory().filter { !isRequiredItem(it) }.count() > 0
     }
 
     fun getNonFoodItems(): List<InventoryItem> {
-      return Query.inventory()
-          .filter { item ->
-            requiredItemsToHave.any { sublist ->
-              sublist.any { item.name.lowercase().contains(it) }
-            }
-          }
-          .actionNotContains("Eat")
-          .toList()
+      return Query.inventory().filter { !isRequiredItem(it) }.actionNotContains("Eat").toList()
+    }
+
+    fun isRequiredItem(item: InventoryItem): Boolean {
+      return requiredItemsToHave.any { sublist ->
+        sublist.any { item.name.lowercase().contains(it) }
+      }
     }
 
     fun hasRequiredItems(): Boolean {

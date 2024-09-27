@@ -1,5 +1,7 @@
 package scripts
 
+import dax.api_lib.DaxWalker
+import dax.teleports.Teleport
 import kotlinx.coroutines.runBlocking
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.ScriptListening
@@ -107,6 +109,9 @@ class VeloxCombat : TribotScript {
   override fun execute(args: String) {
     // Parse args and update GUI state
     parseArgs(args)
+
+    // Blacklist all teleports for now
+    Teleport.values().forEach { DaxWalker.blacklistTeleports(it) }
 
     val renderer = StateMachineVisualizer(stateMachine)
 

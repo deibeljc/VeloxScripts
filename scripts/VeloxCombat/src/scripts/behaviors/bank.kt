@@ -19,8 +19,13 @@ fun IParentNode.openBank() = sequence {
   selector {
     condition("Bank open") { Bank.isOpen() }
     perform("Open Bank") {
-      val bankBooth = Query.gameObjects().nameContains("Bank booth").findBestInteractable().get()
-      bankBooth.interact("Bank")
+      val bankBooth =
+          Query.gameObjects().nameContains("Bank booth", "Bank chest").findBestInteractable().get()
+      if (bankBooth.actions.contains("Bank")) {
+        bankBooth.interact("Bank")
+      } else if (bankBooth.actions.contains("Use")) {
+        bankBooth.interact("Use")
+      }
       Waiting.waitUntil { Bank.isOpen() }
     }
   }
@@ -30,13 +35,13 @@ fun IParentNode.depositItems() = sequence {
   updateState("Despositing Items")
   openBank()
   selector {
-    condition("Deposit All Non Food") { InventoryHelper.hasNonFood() }
+    condition("Deposit All Non Food") { !InventoryHelper.hasNonFood() }
     perform("Deposit All Non Food") {
       val itemIDsToDeposit = InventoryHelper.getNonFoodItems().toList()
       val itemsToDeposit =
-        itemIDsToDeposit.associate { item ->
-          item.id to Query.inventory().idEquals(item.id).count()
-        }
+          itemIDsToDeposit.associate { item ->
+            item.id to Query.inventory().idEquals(item.id).count()
+          }
 
       itemsToDeposit.forEach { (item, count) -> Bank.deposit(item, count) }
     }
@@ -52,7 +57,7 @@ fun IParentNode.initNode() = sequence {
       perform("Withdraw required items") {
         requiredItemsToHave.forEach { sublist ->
           val nameToFind =
-            sublist.find { item -> Query.bank().nameContains(item).findFirst().isPresent }
+              sublist.find { item -> Query.bank().nameContains(item).findFirst().isPresent }
           nameToFind?.let { name ->
             val itemCount = Query.bank().nameContains(name).count()
             val item = Query.bank().nameContains(name).findFirst().orElse(null)

@@ -36,20 +36,21 @@ class StateMachine(val states: List<State>, initialState: State? = null) {
       return
     }
 
-    // Evaluate transitions before invoking any actions
-    for (transition in currentState?.transitions ?: emptyList()) {
-      if (transition.condition()) {
-        currentState = transition.toState
-        enterState(currentState)
-        break
+    var transitioned: Boolean
+    do {
+      transitioned = false
+      for (transition in currentState?.transitions ?: emptyList()) {
+        if (transition.condition()) {
+          currentState = transition.toState
+          enterState(currentState)
+          transitioned = true
+          break
+        }
       }
-    }
+    } while (transitioned)
 
-    val nestedStateMachine = currentState?.nestedStateMachine
-
-    // Process the nested state machine's step
-    nestedStateMachine?.step()
-
+    // After all transitions, process the nested state machine and invoke the action
+    currentState?.nestedStateMachine?.step()
     currentState?.action?.invoke()
   }
 
