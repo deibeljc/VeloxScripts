@@ -1,71 +1,88 @@
-# TRiBot scripting gradle template
+# VeloxCombat
 
-## Initial setup
-1) Clone this template/Click 'Use this template' in github
-2) Open with your favorite IDE (IntelliJ recommended)
-3) Make sure gradle is set to use java 11
-4) Perform a gradle refresh
-### Verify Kotlin and Compose versions
-It's a good idea to verify that the version of Kotlin you have installed is compatible with the version of Compose in the template.
-1) Check the [Compose multiplatform](https://github.com/JetBrains/compose-multiplatform/blob/master/VERSIONING.md#kotlin-compatibility) GitHub page to find the version that's compatible your Kotlin version.
-2) Open the `build.gradle.kts` file under the root directory.
-3) In the plugins section, verify that the Kotlin and Compose versions match what you found in step 1.
-4) If you changed anything, perform another gradle refresh.
-
-## Adding a new script
-1) Add a new directory under `scripts`
-2) Open `settings.gradle.kts` under the root directory
-3) Add an include for your new script like: `include("scripts:my-script-name")`
-4) Add a `src` directory inside your new script directory
-5) Add a `scripts` directory inside your new script src directory
-6) Refresh gradle within your IDE
-
-## Adding a new library
-1) Add a new directory under `libraries`
-2) Open `settings.gradle.kts` under the root directory
-3) Add an include for your new library like: `include("libraries:my-library-name")`
-4) Add a `src` directory inside your new library directory
-5) Add a `scripts` directory inside your new library src directory
-6) Refresh gradle within your IDE
-7) Add the new library dependency to any script in the build.gradle.kts file within your script module. Add this inside
-the dependency block: `implementation(project(":libraries:my-library-name"))`
-
-## Other dependencies
-If you are planning on running your script on the TRiBot repository, you cannot add custom dependencies to your 
-script that are not included in TRiBot. 
-
-If you are running locally, add jars to your .tribot/thirdparty folder and 
-this (and TRiBot) will pick them up automatically. Perform a gradle refresh in your IDE after adding.
+VeloxCombat is an advanced combat training script for Old School RuneScape (OSRS) using the TRiBot client. It offers a versatile and customizable experience for players looking to train their combat skills efficiently.
 
 ## Features
-* Compile scripts for TRiBot using the `build` gradle task (goes to correct location)
-* Delete your compiled scripts (in the tribot bin directory) using the tribot `cleanBin` gradle task (deletes correct 
-  files)
-* Pack your scripts into a zip to upload to the repository using repoPackage (or use repoPackageAll to package them all)
-* Upload your scripts to the repository (see the section below)
-* (IntelliJ only) Debug your scripts through a remote debug config named "Debug TRiBot". This will launch tribot and
-attach a remote debugger so that you can step through your scripts.
-* Update repo scripts
-* Lombok automatically configured
-* JavaFX automatically configured
-* Allatori annotations automatically configured
 
-## Repository updating
-Note that `repoPackage` will package your scripts into a zip file inside your project: `scripts/[script-module]/build/repo-deploy/[script-module].zip`
-### Update your script on the TRiBot Repository
-1) Put the script's repository ID in the script's corresponding gradle.properties file with the key repoId. Ex. 
-   `repoId=1000` . This can take a comma separated list of ids, if you have multiple variants.
-2) Run the `repoUpdate` task in your script gradle project. (or run `repoUpdateAll` in the root project to update 
-   every script)
-3) You can optionally log in every time you want to upload (note logging in once is scoped to the Gradle daemon), or 
-   login once and save the login info. Note that if you choose this second option to save your login info, please 
-   ensure your machine is secure. Don't allow people to take your saved info.
+1. **Combat Training**: Automatically fights monsters based on the player's combat level and preferences.
 
-### Versioning
-The version to use is found by the following rules:
-* Check if a `scriptVersion` property is set, and use it if so
-* Check if a `scriptBaseVersion` property is set, and use it if it is greater than the current version (to allow 
-  going from 1.33 -> 2.0, for example)
-* Check if a `scriptVersionIncrement` property is set, and increment the current script version by that amount (such 
-  as 0.01)
-* Finally, if no other rule matched, default to the same version the script was before
+2. **Dynamic Area Selection**: Chooses the best training area based on the player's stats and equipment.
+
+3. **Adaptive Combat Styles**: Balances combat styles to ensure even skill progression or focuses on a preferred style.
+
+4. **Smart Eating**: Configurable eating thresholds and options to eat to full health.
+
+5. **Loot Collection**: Customizable loot settings to pick up valuable items.
+
+6. **Fishing and Cooking**: Ability to fish and cook food when supplies are low.
+
+7. **Banking**: Automatically banks items when inventory is full.
+
+8. **GUI**: User-friendly graphical interface for easy configuration.
+
+9. **State Machine**: Utilizes a state machine for efficient script flow and decision making.
+
+10. **Anti-ban Measures**: Implements anti-ban features to make the script's behavior more human-like.
+
+## Script Logic Structure
+
+```mermaid
+graph LR
+    A[Start] --> B{State Machine}
+    B --> |Init State| C[Init Node]
+    B --> |Combat State| D[Combat Node]
+    B --> |Fish State| E[Fish Node]
+    B --> |Cook State| F[Cook Node]
+    B --> |Bank State| G[Bank Node]
+
+    C --> |Behavior Tree| H[Init Behavior Tree]
+    D --> |Behavior Tree| I[Combat Behavior Tree]
+    E --> |Behavior Tree| J[Fish Behavior Tree]
+    F --> |Behavior Tree| K[Cook Behavior Tree]
+    G --> |Behavior Tree| L[Bank Behavior Tree]
+
+    H --> M[Open Bank]
+    H --> N[Withdraw Items]
+
+    I --> O[Balance Combat Style]
+    I --> P[Walk to Training Area]
+    I --> Q[Eat Food]
+    I --> R[Loot]
+    I --> S[Fight Nearest Enemy]
+
+    J --> T[Walk to Fishing Spot]
+    J --> U[Fish]
+
+    K --> V[Ensure Fire Exists]
+    K --> W[Cook Food]
+    K --> X[Drop Burnt Food]
+
+    L --> Y[Open Bank]
+    L --> Z[Deposit Items]
+
+    B --> |Transitions| B
+```
+
+### Combat
+
+The script selects monsters to fight based on the player's combat level and the available training areas. It uses a combination of local and global walking methods to navigate to the chosen area.
+
+### Eating
+
+The script manages the player's health by eating food when necessary. The eating threshold and whether to eat to full health are configurable through the GUI.
+
+### Looting
+
+VeloxCombat can be configured to loot specific items. The loot settings are managed through the GUI.
+
+### Fishing and Cooking
+
+When food supplies are low, the script can fish and cook to replenish its stock.
+
+### Banking
+
+The script automatically banks items when the inventory is full.
+
+## GUI
+
+VeloxCombat features a user-friendly GUI for easy configuration of various settings. The GUI allows users to adjust eating settings, combat preferences, and loot options.
