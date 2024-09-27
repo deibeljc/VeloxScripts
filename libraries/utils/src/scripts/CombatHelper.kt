@@ -1,6 +1,5 @@
 package scripts
 
-import kotlin.jvm.optionals.getOrNull
 import org.tribot.script.sdk.Combat
 import org.tribot.script.sdk.MyPlayer
 import org.tribot.script.sdk.Skill
@@ -8,6 +7,7 @@ import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.query.Query
 import org.tribot.script.sdk.types.Npc
 import scripts.gui.VeloxCombatGUIState
+import kotlin.jvm.optionals.getOrNull
 
 class CombatHelper {
   companion object {
@@ -31,15 +31,15 @@ class CombatHelper {
     private fun getNearestEnemy(monsterArea: MonsterArea?): Npc? {
       val npcNameToSearch = monsterArea?.monsters?.map { it.monsterName }
       var npc =
-          Query.npcs()
-              .inArea(monsterArea?.area)
-              .filter { npcNameToSearch?.contains(it.name) ?: false }
-              .isHealthBarNotEmpty()
-              .filter(Npc::isValid)
-              .isNotBeingInteractedWith()
-              .isReachable()
-              .findBestInteractable()
-              .getOrNull()
+        Query.npcs()
+          .inArea(monsterArea?.area)
+          .filter { npcNameToSearch?.contains(it.name) ?: false }
+          .isHealthBarNotEmpty()
+          .filter(Npc::isValid)
+          .isNotBeingInteractedWith()
+          .isReachable()
+          .findBestInteractable()
+          .getOrNull()
 
       val npcTaretingMe = Query.npcs().isInteractingWithMe().findBestInteractable().getOrNull()
 
@@ -76,27 +76,33 @@ class CombatHelper {
           else if (attack < maxLevel - 5) Combat.AttackStyle.ACCURATE
           else Combat.AttackStyle.DEFENSIVE
         }
+
         Combat.AttackStyle.ACCURATE -> {
           if (attack < maxLevel - 5) Combat.AttackStyle.ACCURATE
           else if (strength < maxLevel - 5) Combat.AttackStyle.AGGRESSIVE
           else Combat.AttackStyle.DEFENSIVE
         }
+
         Combat.AttackStyle.DEFENSIVE -> {
           if (defence < maxLevel - 5) Combat.AttackStyle.DEFENSIVE
           else if (strength < maxLevel - 5) Combat.AttackStyle.AGGRESSIVE
           else Combat.AttackStyle.ACCURATE
         }
+
         Combat.AttackStyle.CONTROLLED -> preferredStyle
         else -> {
           // If no specific condition is met, balance the skills
           val skillDifference = 10
           when {
             strength <= attack - skillDifference || strength <= defence - skillDifference ->
-                Combat.AttackStyle.AGGRESSIVE
+              Combat.AttackStyle.AGGRESSIVE
+
             attack <= strength - skillDifference || attack <= defence - skillDifference ->
-                Combat.AttackStyle.ACCURATE
+              Combat.AttackStyle.ACCURATE
+
             defence <= strength - skillDifference || defence <= attack - skillDifference ->
-                Combat.AttackStyle.DEFENSIVE
+              Combat.AttackStyle.DEFENSIVE
+
             else -> {
               // If all skills are relatively balanced, prioritize Strength for max hit
               Combat.AttackStyle.AGGRESSIVE
@@ -107,12 +113,14 @@ class CombatHelper {
     }
 
     /** Fight the nearest enemy. */
-    fun fightNearestEnemy(monsterArea: MonsterArea?): Boolean {
+    fun fightNearestEnemy(monsterArea: MonsterArea?): Npc? {
       val npc = getNearestEnemy(monsterArea)
 
       npc?.interact("Attack")
 
-      return Waiting.waitUntil { isInCombat() }
+      Waiting.waitUntil { isInCombat() }
+
+      return npc
     }
 
     /** Get health of my player */

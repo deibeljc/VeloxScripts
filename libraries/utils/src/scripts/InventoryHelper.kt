@@ -23,6 +23,10 @@ class InventoryHelper {
       return Query.inventory().nameContains("Raw").count() > 0
     }
 
+    fun rawFoodCount(): Int {
+      return Query.inventory().nameContains("Raw").count()
+    }
+
     /** Has burnt food in inventory */
     fun hasBurntFood(): Boolean {
       return Query.inventory().nameContains("Burnt").count() > 0

@@ -43,8 +43,8 @@ class VeloxState {
       // Add the new state to history
       stateHistories.add(StateHistory(state, currentTime))
 
-      // Ensure history does not exceed 10 entries
-      if (stateHistories.size > 10) {
+      // Ensure history does not exceed 5 entries
+      if (stateHistories.size > 5) {
         stateHistories.removeAt(0)
       }
 

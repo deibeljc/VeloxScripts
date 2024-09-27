@@ -1,17 +1,17 @@
 package scripts.behaviors
 
 import org.tribot.script.sdk.Combat
+import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.MyPlayer
 import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.frameworks.behaviortree.*
 import org.tribot.script.sdk.query.Query
 import org.tribot.script.sdk.types.Area
-import scripts.CombatHelper
-import scripts.InventoryHelper
-import scripts.Locations
-import scripts.MonsterArea
+import org.tribot.script.sdk.types.Npc
+import scripts.*
 import scripts.gui.VeloxCombatGUIState
-import scripts.updateState
+
+var lastEnemy: Npc? = null
 
 fun IParentNode.combatNode() = sequence {
   updateState("Combat")
@@ -34,15 +34,27 @@ fun IParentNode.loot() = selector {
   val itemsToLoot = VeloxCombatGUIState.lootItems.map { it.lowercase() }
   // Ensure there are coins on the ground
   condition("Has Loot") {
-    Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() == 0
+    Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() == 0 &&
+            lastEnemy?.isValid == true
   }
   perform("Loot Item") {
+    Log.info("Is last enemy valid? ${lastEnemy?.isValid}")
+    // If lastEnemy is valid, wait for ground items to be on their tile
+    if (lastEnemy?.isValid == false) {
+      Waiting.waitUntil(2000) { Query.groundItems().filter { it.tile == lastEnemy?.tile }.count() > 0 }
+    }
+
     val loot =
-        Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.findBestInteractable()
+      Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.findBestInteractable()
     if (loot.isPresent) {
       loot.get().interact("Take")
       // Wait until it is looted
-      Waiting.waitUntil { !Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.findBestInteractable().isPresent }
+      Waiting.waitUntil {
+        !Query.groundItems()
+          .filter { it.name.lowercase() in itemsToLoot }
+          .findBestInteractable()
+          .isPresent
+      }
     }
   }
 }
@@ -56,8 +68,8 @@ fun IParentNode.eatFood() = sequence {
     // the setting
     repeatUntil({
       MyPlayer.getCurrentHealthPercent() == 100.0 && VeloxCombatGUIState.eatToFull.value ||
-          (!VeloxCombatGUIState.eatToFull.value &&
-              MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value)
+              (!VeloxCombatGUIState.eatToFull.value &&
+                      MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value)
     }) {
       perform("Eat Food") { InventoryHelper.eatFood() }
     }
@@ -68,8 +80,10 @@ fun IParentNode.fightNearestEnemy(trainingArea: MonsterArea?) = sequence {
   selector {
     // Don't get an enemy if we are already in combat or if there are coins to be looted
     condition("Wait Until In Combat") {
-      CombatHelper.isInCombat() || Query.groundItems().nameContains("Coins").count() > 0
+      CombatHelper.isInCombat() || Query.groundItems().nameContains("Coins").count() > 0 || lastEnemy?.isValid == true
     }
-    perform("Fight Nearest Enemy") { CombatHelper.fightNearestEnemy(trainingArea) }
+    perform("Fight Nearest Enemy") {
+      lastEnemy = CombatHelper.fightNearestEnemy(trainingArea)
+    }
   }
 }
