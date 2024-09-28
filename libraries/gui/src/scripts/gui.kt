@@ -17,6 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.google.gson.GsonBuilder
+import com.google.gson.annotations.SerializedName
+import com.google.gson.stream.JsonWriter
+import com.google.gson.stream.JsonReader
+import com.google.gson.TypeAdapter
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.tribot.script.sdk.Combat
+import org.tribot.script.sdk.util.ScriptSettings
 
 object VeloxCombatGUIState {
   val isRunning = mutableStateOf(false)
@@ -46,6 +52,76 @@ object VeloxCombatGUIState {
 
   val isScriptStopping = mutableStateOf(false)
 
+  val buryBones = mutableStateOf(false)
+
+  private const val SETTINGS_FILE_NAME = "velox_combat_settings"
+
+  private data class Settings(
+    @SerializedName("eatHealthPercentage")
+    val eatHealthPercentage: Float,
+
+    @SerializedName("foodToReplenish")
+    val foodToReplenish: Int,
+
+    @SerializedName("eatToFull")
+    val eatToFull: Boolean,
+
+    @SerializedName("preferredCombatStyle")
+    val preferredCombatStyle: Combat.AttackStyle,
+
+    @SerializedName("lootItems")
+    val lootItems: List<String>,
+
+    @SerializedName("buryBones")
+    val buryBones: Boolean
+  )
+
+  private val gsonBuilder = GsonBuilder()
+    .setPrettyPrinting()
+    .serializeNulls()
+    .registerTypeAdapter(Combat.AttackStyle::class.java, object : TypeAdapter<Combat.AttackStyle>() {
+      override fun write(out: JsonWriter, value: Combat.AttackStyle?) {
+        out.value(value?.name)
+      }
+
+      override fun read(`in`: JsonReader): Combat.AttackStyle {
+        val style = `in`.nextString()
+        return Combat.AttackStyle.valueOf(style)
+      }
+    }).create()
+
+  private val scriptSettings = ScriptSettings.builder()
+    .gson(gsonBuilder)
+    .build()
+
+  private fun saveSettings() {
+    val settings = Settings(
+      eatHealthPercentage.value,
+      foodToReplenish.value,
+      eatToFull.value,
+      preferredCombatStyle.value,
+      lootItems.toList(),
+      buryBones.value
+    )
+    scriptSettings.save(SETTINGS_FILE_NAME, settings)
+  }
+
+  private fun loadSettings() {
+    scriptSettings.load(SETTINGS_FILE_NAME, Settings::class.java).ifPresent { settings ->
+      eatHealthPercentage.value = settings.eatHealthPercentage
+      foodToReplenish.value = settings.foodToReplenish
+      eatToFull.value = settings.eatToFull
+      preferredCombatStyle.value = settings.preferredCombatStyle
+      lootItems.clear()
+      lootItems.addAll(settings.lootItems)
+      buryBones.value = settings.buryBones
+    }
+  }
+
+  init {
+    loadSettings()
+  }
+
   fun launchGUI() {
     if (!isGUICreated.value) {
       guiJob = CoroutineScope(Dispatchers.Default).launch { application { veloxCombatGUI() } }
@@ -65,6 +141,41 @@ object VeloxCombatGUIState {
   fun initiateStop() {
     isScriptStopping.value = true
     isRunning.value = false
+  }
+
+  fun updateEatHealthPercentage(value: Float) {
+    eatHealthPercentage.value = value
+    saveSettings()
+  }
+
+  fun updateFoodToReplenish(value: Int) {
+    foodToReplenish.value = value
+    saveSettings()
+  }
+
+  fun updateEatToFull(value: Boolean) {
+    eatToFull.value = value
+    saveSettings()
+  }
+
+  fun updatePreferredCombatStyle(style: Combat.AttackStyle) {
+    preferredCombatStyle.value = style
+    saveSettings()
+  }
+
+  fun addLootItem(item: String) {
+    lootItems.add(item)
+    saveSettings()
+  }
+
+  fun removeLootItem(index: Int) {
+    lootItems.removeAt(index)
+    saveSettings()
+  }
+
+  fun updateBuryBones(value: Boolean) {
+    buryBones.value = value
+    saveSettings()
   }
 }
 
@@ -126,7 +237,7 @@ fun EatingSettings() {
         Row(verticalAlignment = Alignment.CenterVertically) {
           Slider(
               value = VeloxCombatGUIState.eatHealthPercentage.value,
-              onValueChange = { VeloxCombatGUIState.eatHealthPercentage.value = it },
+              onValueChange = { VeloxCombatGUIState.updateEatHealthPercentage(it) },
               valueRange = 1f..99f,
           )
           Spacer(modifier = Modifier.width(8.dp))
@@ -146,7 +257,7 @@ fun EatingSettings() {
         Row(verticalAlignment = Alignment.CenterVertically) {
           Slider(
               value = VeloxCombatGUIState.foodToReplenish.value.toFloat(),
-              onValueChange = { VeloxCombatGUIState.foodToReplenish.value = it.roundToInt() },
+              onValueChange = { VeloxCombatGUIState.updateFoodToReplenish(it.roundToInt()) },
               valueRange = 1f..20f,
               steps = 19,
           )
@@ -159,7 +270,7 @@ fun EatingSettings() {
         modifier = Modifier.padding(vertical = 8.dp)) {
           Checkbox(
               checked = VeloxCombatGUIState.eatToFull.value,
-              onCheckedChange = { VeloxCombatGUIState.eatToFull.value = it })
+              onCheckedChange = { VeloxCombatGUIState.updateEatToFull(it) })
           Spacer(modifier = Modifier.width(8.dp))
           Text("Eat to full")
         }
@@ -219,7 +330,7 @@ fun CombatSettings() {
               .forEach { style ->
                 DropdownMenuItem(
                     onClick = {
-                      VeloxCombatGUIState.preferredCombatStyle.value = style
+                      VeloxCombatGUIState.updatePreferredCombatStyle(style)
                       expandedState.value = false
                     }) {
                       Text(style.toString())
@@ -234,6 +345,19 @@ fun LootingSettings() {
   val inputValue = remember { mutableStateOf("") }
 
   Column {
+    // Bury bones checkbox
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(vertical = 8.dp)) {
+          Checkbox(
+              checked = VeloxCombatGUIState.buryBones.value,
+              onCheckedChange = { VeloxCombatGUIState.updateBuryBones(it) })
+          Spacer(modifier = Modifier.width(8.dp))
+          Text("Bury bones")
+        }
+
+    Spacer(modifier = Modifier.height(16.dp))
+
     // Input field and Add button
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
       OutlinedTextField(
@@ -245,7 +369,7 @@ fun LootingSettings() {
       Button(
           onClick = {
             if (inputValue.value.isNotBlank()) {
-              VeloxCombatGUIState.lootItems.add(inputValue.value.trim())
+              VeloxCombatGUIState.addLootItem(inputValue.value.trim())
               inputValue.value = ""
             }
           }) {
@@ -267,7 +391,7 @@ fun LootingSettings() {
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
               Text(item, modifier = Modifier.weight(1f))
-              IconButton(onClick = { VeloxCombatGUIState.lootItems.removeAt(index) }) {
+              IconButton(onClick = { VeloxCombatGUIState.removeLootItem(index) }) {
                 Text("X", color = MaterialTheme.colors.error)
               }
             }
