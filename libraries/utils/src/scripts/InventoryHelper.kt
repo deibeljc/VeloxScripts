@@ -4,15 +4,12 @@ import kotlin.jvm.optionals.getOrNull
 import org.tribot.script.sdk.query.Query
 import org.tribot.script.sdk.types.InventoryItem
 
-/** We need to have one of the items in each top list item to be able to run the script */
-val requiredItemsToHave =
-    listOf(
-        listOf("rune axe", "adamant axe", "mithril axe", "steel axe", "iron axe", "bronze axe"),
-        listOf("tinderbox"),
-        listOf("small fishing net", "big fishing net"))
-
 class InventoryHelper {
   companion object {
+    fun getRequiredItems(): List<List<String>> {
+      return Locations.getBestTrainingArea().requiredItems
+    }
+
     /** Has food in inventory */
     fun hasFood(): Boolean {
       val hasFood = Query.inventory().actionContains("Eat").count() > 0
@@ -56,14 +53,14 @@ class InventoryHelper {
     }
 
     fun isRequiredItem(item: InventoryItem): Boolean {
-      return requiredItemsToHave.any { sublist ->
+      return getRequiredItems().any { sublist ->
         sublist.any { item.name.lowercase().contains(it) }
       }
     }
 
     fun hasRequiredItems(): Boolean {
       val hasRequiredItems =
-          requiredItemsToHave.all { category ->
+          getRequiredItems().all { category ->
             val categoryResult =
                 category.any { requiredItem ->
                   Query.inventory().nameContains(requiredItem).toList().isNotEmpty()

@@ -115,10 +115,9 @@ class CombatHelper {
     /** Fight the nearest enemy. */
     fun fightNearestEnemy(monsterArea: MonsterArea?): Npc? {
       val npc = getNearestEnemy(monsterArea)
-
       npc?.interact("Attack")
 
-      Waiting.waitUntil { npc?.isInteracting() == true }
+      Waiting.waitUntil { npc?.isInteracting == true }
 
       return npc
     }

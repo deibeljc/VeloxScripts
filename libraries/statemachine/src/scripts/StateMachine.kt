@@ -1,5 +1,7 @@
 package scripts.statemachine
 
+import org.tribot.script.sdk.Log
+
 // State and Transition Classes
 class State(
     val name: String,
@@ -41,6 +43,7 @@ class StateMachine(val states: List<State>, initialState: State? = null) {
       transitioned = false
       for (transition in currentState?.transitions ?: emptyList()) {
         if (transition.condition()) {
+          Log.info("Transitioning to ${transition.toState.name}")
           currentState = transition.toState
           enterState(currentState)
           transitioned = true
@@ -97,6 +100,7 @@ fun createState(name: String, block: StateBuilder.() -> Unit): State {
 // StateMachineBuilder Class with corrections
 class StateMachineBuilder {
   private val states = mutableSetOf<State>()
+  private val globalTransitions = mutableListOf<Pair<() -> Boolean, State>>()
 
   fun state(name: String, block: StateBuilder.() -> Unit): State {
     val state = createState(name, block)
@@ -109,6 +113,10 @@ class StateMachineBuilder {
     return TransitionBuilder(this, condition)
   }
 
+  fun any(block: AnyTransitionBuilder.() -> Unit) {
+    AnyTransitionBuilder().apply(block)
+  }
+
   inner class TransitionBuilder(
       private val fromState: State,
       private val condition: () -> Boolean
@@ -119,7 +127,28 @@ class StateMachineBuilder {
     }
   }
 
+  inner class AnyTransitionBuilder {
+    infix fun on(condition: () -> Boolean): AnyTransitionBuilder {
+      return this.also { it.condition = condition }
+    }
+
+    infix fun to(toState: State) {
+      globalTransitions.add(condition to toState)
+      states.add(toState) // Ensure 'to' state is added
+    }
+
+    private lateinit var condition: () -> Boolean
+  }
+
   fun build(initialState: State? = null): StateMachine {
+    // Apply global transitions to all states, except self-transitions
+    states.forEach { state ->
+      globalTransitions.forEach { (condition, toState) ->
+        if (state != toState) {
+          state.transitions.add(Transition(condition, toState))
+        }
+      }
+    }
     return StateMachine(states.toList(), initialState)
   }
 }

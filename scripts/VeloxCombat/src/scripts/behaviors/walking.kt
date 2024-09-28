@@ -12,7 +12,7 @@ import scripts.walkTo
 
 fun IParentNode.walk(destination: WorldTile, name: String?) = selector {
   condition("At spot") { atSpot(destination) }
-  perform { walkTo(destination, name, VeloxState::setState) }
+  condition { walkTo(destination, name, VeloxState::setState) }
 }
 
 fun IParentNode.walk(destination: Area, name: String?) = selector {

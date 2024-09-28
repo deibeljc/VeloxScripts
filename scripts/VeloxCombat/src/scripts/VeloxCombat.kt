@@ -2,6 +2,9 @@ package scripts
 
 import dax.api_lib.DaxWalker
 import dax.teleports.Teleport
+import java.awt.Color
+import java.awt.Graphics
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.ScriptListening
@@ -10,17 +13,13 @@ import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.script.ScriptConfig
 import org.tribot.script.sdk.script.TribotScript
 import org.tribot.script.sdk.script.TribotScriptManifest
-import scripts.behaviors.initState
+import scripts.behaviors.setupState
 import scripts.behaviors.stateMachine
 import scripts.gui.VeloxCombatGUIState
 import scripts.utils.viz.ProgressBar
-import java.awt.Color
-import java.awt.Graphics
-import java.util.concurrent.atomic.AtomicReference
 
 @TribotScriptManifest(
-  name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script."
-)
+    name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script.")
 class VeloxCombat : TribotScript {
   // Properties
   private val experienceTracker = ExperienceTracker()
@@ -40,6 +39,7 @@ class VeloxCombat : TribotScript {
     setupScript(args)
     runMainLoop()
     cleanup()
+    VeloxCombatGUIState.stopRunning()
   }
 
   private fun setupScript(args: String) {
@@ -58,7 +58,7 @@ class VeloxCombat : TribotScript {
   private fun setupStateMachine() {
     startTime = System.currentTimeMillis()
     lastUpdateTime = startTime
-    stateMachine.setInitialState(initState)
+    stateMachine.setInitialState(setupState)
   }
 
   private fun setupPaintManager() {
@@ -70,16 +70,16 @@ class VeloxCombat : TribotScript {
 
   private fun setupScriptListeners() {
     ScriptListening.addPreEndingListener(
-      Runnable {
-        VeloxCombatGUIState.closeGUI()
-        VeloxCombatGUIState.stopRunning()
-        Log.info("Script is ending")
-      })
+        Runnable {
+          VeloxCombatGUIState.closeGUI()
+          VeloxCombatGUIState.stopRunning()
+          Log.info("Script is ending")
+        })
   }
 
   private fun runMainLoop() {
     runBlocking {
-      while (VeloxCombatGUIState.shouldRun) {
+      while (VeloxCombatGUIState.shouldRun && !VeloxCombatGUIState.isScriptStopping.value) {
         if (VeloxCombatGUIState.isRunning.value) {
           performScriptIteration()
         } else {
@@ -110,10 +110,10 @@ class VeloxCombat : TribotScript {
         val (setting, value) = parts.map { it.trim() }
         when (setting.lowercase()) {
           "eathealth" ->
-            VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
+              VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
 
           "eattofull" ->
-            VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
+              VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
         }
       }
     }

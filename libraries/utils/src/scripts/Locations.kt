@@ -105,7 +105,22 @@ enum class Monster(
       listOf(
           "Giant spiders can sometimes hit up to a maximum of 7 points of damage.",
           "No drops other than beginner clue scrolls.",
-          "Unattended players could still possibly die before aggression ends."))
+          "Unattended players could still possibly die before aggression ends.")),
+  HILL_GIANT(
+      "Hill Giant",
+      28,
+      35,
+      "Edgeville Dungeon, Giants' Plateau",
+      listOf(
+          "Decently high HP for level (35).",
+          "They have decent profitable drops for lower-level players such as limpwurt roots and rare uncut gems.",
+          "Chance of dropping a giant key, which allows the player to fight Obor.",
+          "They sometimes drop law runes, cosmic runes, nature runes, low-level equipment, and rarely chaos runes and death runes.",
+          "Always drop big bones which can be sold for guaranteed profit or used for Prayer experience while training.",
+          "Faster aggression reset than Stronghold of Security, due to no doors."),
+      listOf(
+          "Highly crowded in most worlds.",
+          "They can be a bit rough and tough against lower levels.")),
 }
 
 data class MonsterArea(
@@ -114,10 +129,20 @@ data class MonsterArea(
     val maxLevel: Int,
     val monsters: List<Monster>,
     var area: Area? = null,
+    var fishingArea: Area,
     val treeLocation: WorldTile,
+    var requiredItems: List<List<String>> = listOf(),
     val requirements: String,
     val recommendations: String
 )
+
+val axe = listOf("rune axe", "adamant axe", "mithril axe", "steel axe", "iron axe", "bronze axe")
+val tinderbox = listOf("tinderbox")
+val fishingnet = listOf("small fishing net", "big fishing net")
+val flyfishingrod = listOf("fly fishing rod")
+val feathers = listOf("feather")
+val fishingrod = listOf("fishing rod")
+val bait = listOf("bait")
 
 object Locations {
   private val areas =
@@ -134,7 +159,9 @@ object Locations {
                   WorldTile(3197, 3256, 0),
                   WorldTile(3187, 3256, 0),
                   WorldTile(3184, 3269, 0)),
+              Area.fromPolygon(),
               WorldTile(3205, 3263),
+              listOf(),
               "None",
               "Your best weapon and armour."),
           MonsterArea(
@@ -162,27 +189,22 @@ object Locations {
                   WorldTile(3193, 3196),
                   WorldTile(3185, 3205),
                   WorldTile(3178, 3206)),
+              Area.fromPolygon(
+                  listOf(
+                      WorldTile(3246, 3159, 0),
+                      WorldTile(3246, 3156, 0),
+                      WorldTile(3247, 3153, 0),
+                      WorldTile(3243, 3150, 0),
+                      WorldTile(3241, 3148, 0),
+                      WorldTile(3240, 3146, 0),
+                      WorldTile(3235, 3147, 0),
+                      WorldTile(3233, 3151, 0),
+                      WorldTile(3240, 3157, 0),
+                      WorldTile(3243, 3160, 0))),
               WorldTile(3215, 3183),
+              listOf(axe, tinderbox, fishingnet),
               "None",
               "Your best weapon and armour. Food may be required but they drop raw rat meat. Small fishing net, tinderbox, and an axe may be optional to fish shrimps south-east of Lumbridge Swamp."),
-          MonsterArea(
-              "Edgeville Monastery",
-              1,
-              20,
-              listOf(Monster.MONK),
-              Area.fromPolygon(
-                  WorldTile(3050, 3472, 0),
-                  WorldTile(3040, 3477, 0),
-                  WorldTile(3039, 3497, 0),
-                  WorldTile(3042, 3509, 0),
-                  WorldTile(3053, 3511, 0),
-                  WorldTile(3061, 3508, 0),
-                  WorldTile(3064, 3491, 0),
-                  WorldTile(3062, 3480, 0),
-                  WorldTile(3059, 3474, 0)),
-              WorldTile(3055, 3485),
-              "None",
-              ""),
           MonsterArea(
               "Lumbridge Swamp",
               20,
@@ -208,27 +230,61 @@ object Locations {
                   WorldTile(3193, 3196),
                   WorldTile(3185, 3205),
                   WorldTile(3178, 3206)),
+              Area.fromPolygon(
+                  listOf(
+                      WorldTile(3246, 3159, 0),
+                      WorldTile(3246, 3156, 0),
+                      WorldTile(3247, 3153, 0),
+                      WorldTile(3243, 3150, 0),
+                      WorldTile(3241, 3148, 0),
+                      WorldTile(3240, 3146, 0),
+                      WorldTile(3235, 3147, 0),
+                      WorldTile(3233, 3151, 0),
+                      WorldTile(3240, 3157, 0),
+                      WorldTile(3243, 3160, 0))),
               WorldTile(3215, 3183),
+              listOf(axe, tinderbox, fishingnet),
               "None",
               "Bring your best armour (chainbody recommended) and weapons."),
           MonsterArea(
-              "Stronghold of Security - Level 2",
+              "Hill Giant",
               40,
-              70,
-              listOf(Monster.FLESH_CRAWLER, Monster.ZOMBIE),
-              null,
-              WorldTile(3215, 3183),
-              "Travelling through Vault of War (level 1) once. Decent combat.",
-              "Bring your best armour and weapons, and food. 40+ Defence is recommended."),
-          MonsterArea(
-              "Stronghold of Security - Level 3",
               60,
-              99,
-              listOf(Monster.GIANT_SPIDER),
-              null,
-              WorldTile(3215, 3183),
-              "Travelling through Vault of War (level 1) and Catacomb of Famine (level 2) once. High-level combat.",
-              "If fishing for food by the riverbank of Barbarian Village, bring a fly fishing rod and feather. Prioritize salmon over trout. If retrieving food from the Edgeville bank for longer trips, bring 1 or 2 strength potions and the rest should be anchovy pizzas or swordfish."))
+              listOf(Monster.HILL_GIANT),
+              Area.fromPolygon(
+                  WorldTile(3116, 9854, 0),
+                  WorldTile(3119, 9853, 0),
+                  WorldTile(3124, 9849, 0),
+                  WorldTile(3126, 9844, 0),
+                  WorldTile(3125, 9836, 0),
+                  WorldTile(3121, 9830, 0),
+                  WorldTile(3117, 9827, 0),
+                  WorldTile(3113, 9827, 0),
+                  WorldTile(3111, 9823, 0),
+                  WorldTile(3107, 9822, 0),
+                  WorldTile(3099, 9825, 0),
+                  WorldTile(3094, 9830, 0),
+                  WorldTile(3094, 9836, 0),
+                  WorldTile(3100, 9840, 0),
+                  WorldTile(3105, 9840, 0),
+                  WorldTile(3106, 9844, 0),
+                  WorldTile(3108, 9848, 0),
+                  WorldTile(3109, 9850, 0),
+                  WorldTile(3112, 9851, 0)),
+              Area.fromPolygon(
+                  WorldTile(3107, 3436, 0),
+                  WorldTile(3109, 3436, 0),
+                  WorldTile(3112, 3434, 0),
+                  WorldTile(3109, 3430, 0),
+                  WorldTile(3106, 3426, 0),
+                  WorldTile(3105, 3423, 0),
+                  WorldTile(3100, 3430, 0),
+                  WorldTile(3101, 3433, 0),
+                  WorldTile(3105, 3435, 0)),
+              WorldTile(3103, 3434),
+              listOf(axe, tinderbox, flyfishingrod, feathers),
+              "None",
+              "Your best weapon and armour."))
 
   fun getBestTrainingArea(): MonsterArea {
     val playerLevel = MyPlayer.getCombatLevel()

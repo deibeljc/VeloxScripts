@@ -55,7 +55,9 @@ fun IParentNode.loot() = sequence {
     }
 
     val loot =
-        Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.findBestInteractable()
+        Query.groundItems()
+            .filter { itemsToLoot.any { lootItem -> it.name.lowercase().contains(lootItem) } }
+            .findBestInteractable()
     if (loot.isPresent) {
       val lootItem = loot.get()
       val itemName = lootItem.name

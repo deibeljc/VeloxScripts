@@ -7,7 +7,7 @@ import org.tribot.script.sdk.frameworks.behaviortree.*
 import org.tribot.script.sdk.query.Query
 import org.tribot.script.sdk.walking.GlobalWalking
 import scripts.InventoryHelper
-import scripts.requiredItemsToHave
+import scripts.gui.VeloxCombatGUIState
 import scripts.updateState
 
 fun IParentNode.openBank() = sequence {
@@ -18,7 +18,7 @@ fun IParentNode.openBank() = sequence {
   }
   selector {
     condition("Bank open") { Bank.isOpen() }
-    perform("Open Bank") {
+    condition("Open Bank") {
       val bankBooth =
           Query.gameObjects().nameContains("Bank booth", "Bank chest").findBestInteractable().get()
       if (bankBooth.actions.contains("Bank")) {
@@ -48,14 +48,28 @@ fun IParentNode.depositItems() = sequence {
   }
 }
 
-fun IParentNode.initNode() = sequence {
+fun IParentNode.setupNode() = sequence {
   updateState("Init")
   selector {
     condition("Has Required Items") { InventoryHelper.hasRequiredItems() }
     sequence {
       openBank()
-      perform("Withdraw required items") {
-        requiredItemsToHave.forEach { sublist ->
+      condition("Withdraw required items") {
+        val allItemsFound =
+            InventoryHelper.getRequiredItems().all { sublist ->
+              sublist.any { item -> Query.bank().nameContains(item).findFirst().isPresent }
+            }
+
+        if (!allItemsFound) {
+          val missingItems = InventoryHelper.getRequiredItems().filter { sublist ->
+            sublist.none { item -> Query.bank().nameContains(item).findFirst().isPresent }
+          }.flatten()
+          Log.error(
+              "Not all required items found in bank. Missing items: ${missingItems.joinToString(", ")}. Stopping script.")
+          VeloxCombatGUIState.initiateStop()
+        }
+
+        InventoryHelper.getRequiredItems().forEach { sublist ->
           val nameToFind =
               sublist.find { item -> Query.bank().nameContains(item).findFirst().isPresent }
           nameToFind?.let { name ->
@@ -63,7 +77,7 @@ fun IParentNode.initNode() = sequence {
             val item = Query.bank().nameContains(name).findFirst().orElse(null)
             item?.let {
               Log.info("Withdrawing $itemCount $name")
-              Waiting.waitUntil { Bank.withdraw(it, 1) }
+              Waiting.waitUntil { Bank.withdraw(it, it.stack) }
             }
           }
         }

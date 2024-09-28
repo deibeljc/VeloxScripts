@@ -5,14 +5,14 @@ import org.tribot.script.sdk.MyPlayer
 import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.frameworks.behaviortree.*
 import org.tribot.script.sdk.query.Query
-import scripts.FISHING_AREA
+import scripts.Locations
 import scripts.VeloxState
 import scripts.updateState
 
 fun IParentNode.fishNode() = sequence {
   updateState("Fishing")
   // We want to walk to the fishing spot
-  walk(FISHING_AREA.center, "Fishing Spot")
+  walk(Locations.getBestTrainingArea().fishingArea.center, "Fishing Spot")
   fish()
 }
 
@@ -23,7 +23,10 @@ fun IParentNode.fish() = sequence {
       Log.info("Fishing")
       VeloxState.setState("Fishing")
       val fishingSpot = Query.npcs().nameContains("Fishing spot").findBestInteractable().get()
-      fishingSpot.interact("Net")
+
+      val interactionName =
+        fishingSpot.actions.first { it.contains("Net") || it.contains("Lure") }
+      fishingSpot.interact(interactionName)
       Waiting.waitUntil { MyPlayer.isAnimating() }
     }
   }
