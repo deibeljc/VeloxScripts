@@ -72,6 +72,16 @@ fun IParentNode.loot() = sequence {
             newCount > initialCount
           }
 
+      if (lootedSuccessfully) {
+        val finalCount = Query.inventory().nameEquals(itemName).count()
+        val amountLooted = finalCount - initialCount
+
+        // Track loot, but not if it's bones that we're burying
+        if (!(itemName.contains("bones", ignoreCase = true) && VeloxCombatGUIState.buryBones.value)) {
+          EconomyTracker.getInstance().addLootedItem(lootItem.id, amountLooted)
+        }
+      }
+
       if (VeloxCombatGUIState.buryBones.value) {
         // Bury the bones in your inventory now
         Query.inventory().actionEquals("Bury").forEach {
@@ -80,12 +90,6 @@ fun IParentNode.loot() = sequence {
           Waiting.waitUntil({ !MyPlayer.isAnimating() })
         }
         Waiting.waitUntil { !Query.inventory().actionEquals("Bury").findFirst().isPresent }
-      } else if (lootedSuccessfully) {
-        val finalCount = Query.inventory().nameEquals(itemName).count()
-        val amountLooted = finalCount - initialCount
-
-        // Add the looted item to the EconomyTracker
-        EconomyTracker.getInstance().addLootedItem(lootItem.id, amountLooted)
       }
     }
   }
