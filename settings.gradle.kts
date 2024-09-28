@@ -1,6 +1,6 @@
 rootProject.name = "VeloxScripts"
 
-include("libraries:statemachine")
+include("libraries:frameworks")
 
 include("libraries:utils")
 

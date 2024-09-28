@@ -1,4 +1,4 @@
-package scripts.statemachine
+package scripts.frameworks
 
 import java.awt.*
 import kotlin.math.cos

@@ -1,13 +1,13 @@
 package scripts.behaviors
 
 import org.tribot.script.sdk.MyPlayer
-import org.tribot.script.sdk.frameworks.behaviortree.IParentNode
-import org.tribot.script.sdk.frameworks.behaviortree.condition
-import org.tribot.script.sdk.frameworks.behaviortree.perform
-import org.tribot.script.sdk.frameworks.behaviortree.selector
 import org.tribot.script.sdk.types.Area
 import org.tribot.script.sdk.types.WorldTile
 import scripts.VeloxState
+import scripts.behaviortree.IParentNode
+import scripts.behaviortree.condition
+import scripts.behaviortree.perform
+import scripts.behaviortree.selector
 import scripts.walkTo
 
 fun IParentNode.walk(destination: WorldTile, name: String?) = selector {

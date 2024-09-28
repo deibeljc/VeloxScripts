@@ -1,16 +1,17 @@
 package scripts
 
-import java.awt.Color
-import java.awt.Graphics
 import kotlinx.coroutines.*
 import org.tribot.script.sdk.painting.Painting
 import org.tribot.script.sdk.painting.template.basic.BasicPaintTemplate
 import org.tribot.script.sdk.painting.template.basic.PaintLocation
 import org.tribot.script.sdk.painting.template.basic.PaintRows
 import org.tribot.script.sdk.painting.template.basic.PaintTextRow
+import scripts.behaviors.stateMachine
+import scripts.frameworks.StateTreeVisualizer
+import java.awt.Color
+import java.awt.Graphics
 
 class PaintManager(private val experienceTracker: ExperienceTracker) {
-  private val PAINT_UPDATE_INTERVAL = 16L
   private val template = PaintTextRow.builder().background(Color.blue.darker()).build()
   private var paint: BasicPaintTemplate.BasicPaintTemplateBuilder = BasicPaintTemplate.builder()
   private val renderStack = mutableMapOf<String, RenderItem>()
@@ -24,18 +25,19 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
   private val FRAME_TIME = 1000L / TARGET_FPS
 
   data class RenderItem(
-      var renderFunction: (Graphics, Float, Float, Float) -> Unit,
-      var width: Int,
-      var height: Int,
-      var y: Float,
-      var alpha: Float = 0f,
-      var targetY: Float = 0f
+    var renderFunction: (Graphics, Float, Float, Float) -> Unit,
+    var width: Int,
+    var height: Int,
+    var y: Float,
+    var alpha: Float = 0f,
+    var targetY: Float = 0f
   )
 
   fun setupPaint() {
     Painting.addPaint { g ->
       paint.build().render(g)
       renderStack(g)
+      StateTreeVisualizer(stateMachine).render(g, 100, 100)
     }
   }
 
@@ -63,34 +65,38 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
 
   private fun setupPaintBuilder(): BasicPaintTemplate.BasicPaintTemplateBuilder {
     paint =
-        BasicPaintTemplate.builder()
-            .row(PaintRows.runtime(template.toBuilder()))
-            .row(PaintRows.scriptName(template.toBuilder()))
-            .row(
-                template
-                    .toBuilder()
-                    .label("Location")
-                    .value(Locations.getBestTrainingArea().name)
-                    .build())
-            .row(
-                template
-                    .toBuilder()
-                    .label("Monster to fight")
-                    .value(Locations.getBestTrainingArea().monsters.joinToString(", "))
-                    .build())
-            .row(
-                template
-                    .toBuilder()
-                    .label("Total Earnings")
-                    .value("${EconomyTracker.getInstance().getTotalEarnings()} gp")
-                    .build())
-            .row(
-                template
-                    .toBuilder()
-                    .label("GP/hour")
-                    .value("${EconomyTracker.getInstance().getGpPerHour()} gp/h")
-                    .build())
-            .location(PaintLocation.BOTTOM_LEFT_VIEWPORT)
+      BasicPaintTemplate.builder()
+        .row(PaintRows.runtime(template.toBuilder()))
+        .row(PaintRows.scriptName(template.toBuilder()))
+        .row(
+          template
+            .toBuilder()
+            .label("Location")
+            .value(Locations.getBestTrainingArea().name)
+            .build()
+        )
+        .row(
+          template
+            .toBuilder()
+            .label("Monster to fight")
+            .value(Locations.getBestTrainingArea().monsters.joinToString(", "))
+            .build()
+        )
+        .row(
+          template
+            .toBuilder()
+            .label("Total Earnings")
+            .value("${EconomyTracker.getInstance().getTotalEarnings()} gp")
+            .build()
+        )
+        .row(
+          template
+            .toBuilder()
+            .label("GP/hour")
+            .value("${EconomyTracker.getInstance().getGpPerHour()} gp/h")
+            .build()
+        )
+        .location(PaintLocation.BOTTOM_LEFT_VIEWPORT)
 
     return paint
   }
@@ -119,10 +125,10 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
   }
 
   fun pushToRenderStack(
-      key: String,
-      renderFunction: (Graphics, Float, Float, Float) -> Unit,
-      width: Int,
-      height: Int
+    key: String,
+    renderFunction: (Graphics, Float, Float, Float) -> Unit,
+    width: Int,
+    height: Int
   ) {
     if (key in renderStack) {
       // Update existing item

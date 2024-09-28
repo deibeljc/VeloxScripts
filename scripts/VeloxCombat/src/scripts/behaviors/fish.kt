@@ -3,10 +3,10 @@ package scripts.behaviors
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.MyPlayer
 import org.tribot.script.sdk.Waiting
-import org.tribot.script.sdk.frameworks.behaviortree.*
 import org.tribot.script.sdk.query.Query
 import scripts.Locations
 import scripts.VeloxState
+import scripts.behaviortree.*
 import scripts.updateState
 
 fun IParentNode.fishNode() = sequence {

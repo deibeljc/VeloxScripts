@@ -1,12 +1,12 @@
-package scripts.statemachine
+package scripts.frameworks
 
 import org.tribot.script.sdk.Log
 
 // State and Transition Classes
 class State(
-    val name: String,
-    val action: () -> Unit = {},
-    val nestedStateMachine: StateMachine? = null
+  val name: String,
+  val action: () -> Unit = {},
+  val nestedStateMachine: StateMachine? = null
 ) {
   val transitions = mutableListOf<Transition>()
 }
@@ -118,8 +118,8 @@ class StateMachineBuilder {
   }
 
   inner class TransitionBuilder(
-      private val fromState: State,
-      private val condition: () -> Boolean
+    private val fromState: State,
+    private val condition: () -> Boolean
   ) {
     infix fun to(toState: State) {
       fromState.transitions.add(Transition(condition, toState))
@@ -155,8 +155,8 @@ class StateMachineBuilder {
 
 // Top-level StateMachine Function
 fun createStateMachine(
-    initialState: State? = null,
-    block: StateMachineBuilder.() -> Unit
+  initialState: State? = null,
+  block: StateMachineBuilder.() -> Unit
 ): StateMachine {
   val builder = StateMachineBuilder()
   builder.block()

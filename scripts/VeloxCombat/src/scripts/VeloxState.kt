@@ -1,8 +1,8 @@
 package scripts
 
 import org.tribot.script.sdk.Log
-import org.tribot.script.sdk.frameworks.behaviortree.IParentNode
-import org.tribot.script.sdk.frameworks.behaviortree.perform
+import scripts.behaviortree.IParentNode
+import scripts.behaviortree.perform
 
 data class StateHistory(val state: String, val timestamp: Long, var duration: Long = 0L)
 
@@ -11,7 +11,7 @@ class VeloxState {
     private var scriptState: String = "Idle"
     private var lastStateChangeTime: Long = System.currentTimeMillis()
     private val stateHistories: MutableList<StateHistory> =
-        mutableListOf(StateHistory(scriptState, lastStateChangeTime))
+      mutableListOf(StateHistory(scriptState, lastStateChangeTime))
 
     /**
      * Sets the current state and records the transition.
@@ -70,15 +70,15 @@ class VeloxState {
       val currentStateDuration = currentTime - lastStateChangeTime
 
       return stateHistories
-          .mapIndexed { index, stateHistory ->
-            val duration =
-                if (index == stateHistories.lastIndex) currentStateDuration
-                else stateHistory.duration
-            val minutes = (duration / 1000) / 60
-            val seconds = (duration / 1000) % 60
-            "${stateHistory.state} [${minutes}m ${seconds}s]"
-          }
-          .joinToString(" -> ")
+        .mapIndexed { index, stateHistory ->
+          val duration =
+            if (index == stateHistories.lastIndex) currentStateDuration
+            else stateHistory.duration
+          val minutes = (duration / 1000) / 60
+          val seconds = (duration / 1000) % 60
+          "${stateHistory.state} [${minutes}m ${seconds}s]"
+        }
+        .joinToString(" -> ")
     }
   }
 }
