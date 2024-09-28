@@ -44,7 +44,7 @@ fun IParentNode.loot() = sequence {
   // Ensure there are coins on the ground
   condition("Has Loot") {
     (Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() > 0 ||
-            lastEnemy?.isValid == true) && !CombatHelper.isInCombat()
+        lastEnemy?.isValid == true) && !CombatHelper.isInCombat()
   }
   perform("Loot Item") {
     // If lastEnemy is valid, wait for ground items to be on their tile
@@ -55,9 +55,10 @@ fun IParentNode.loot() = sequence {
     }
 
     val loot =
-      Query.groundItems()
-        .filter { itemsToLoot.any { lootItem -> it.name.lowercase().contains(lootItem) } }
-        .findBestInteractable()
+        Query.groundItems()
+            .filter { itemsToLoot.any { lootItem -> it.name.lowercase().contains(lootItem) } }
+            .isInLineOfSight()
+            .findBestInteractable()
     if (loot.isPresent) {
       val lootItem = loot.get()
       val itemName = lootItem.name
@@ -66,20 +67,20 @@ fun IParentNode.loot() = sequence {
       lootItem.interact("Take")
 
       val lootedSuccessfully =
-        Waiting.waitUntil(1500) {
-          val newCount = Query.inventory().nameEquals(itemName).count()
-          newCount > initialCount
-        }
+          Waiting.waitUntil(1500) {
+            val newCount = Query.inventory().nameEquals(itemName).count()
+            newCount > initialCount
+          }
 
       if (VeloxCombatGUIState.buryBones.value) {
         // Bury the bones in your inventory now
         Query.inventory().actionEquals("Bury").forEach {
           it.click()
+          Waiting.waitUntil({ MyPlayer.isAnimating() })
+          Waiting.waitUntil({ !MyPlayer.isAnimating() })
         }
         Waiting.waitUntil { !Query.inventory().actionEquals("Bury").findFirst().isPresent }
-      }
-
-      if (lootedSuccessfully) {
+      } else if (lootedSuccessfully) {
         val finalCount = Query.inventory().nameEquals(itemName).count()
         val amountLooted = finalCount - initialCount
 
@@ -99,8 +100,8 @@ fun IParentNode.eatFood() = sequence {
     // the setting
     repeatUntil({
       MyPlayer.getCurrentHealthPercent() == 100.0 && VeloxCombatGUIState.eatToFull.value ||
-              (!VeloxCombatGUIState.eatToFull.value &&
-                      MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value)
+          (!VeloxCombatGUIState.eatToFull.value &&
+              MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value)
     }) {
       perform("Eat Food") { InventoryHelper.eatFood() }
     }
