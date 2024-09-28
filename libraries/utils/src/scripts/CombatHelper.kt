@@ -118,7 +118,7 @@ class CombatHelper {
 
       npc?.interact("Attack")
 
-      Waiting.waitUntil { isInCombat() }
+      Waiting.waitUntil { npc?.isInteracting() == true }
 
       return npc
     }

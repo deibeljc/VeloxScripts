@@ -15,7 +15,7 @@ var lastEnemy: Npc? = null
 fun IParentNode.combatNode() = sequence {
   updateState("Combat")
   balanceCombatStyle()
-  resetLastEnemy()
+  // resetLastEnemy()
   val trainingArea = Locations.getBestTrainingArea()
   walk(trainingArea.area ?: Area.fromPolygon(), trainingArea.name)
   eatFood()
@@ -57,13 +57,24 @@ fun IParentNode.loot() = sequence {
     val loot =
         Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.findBestInteractable()
     if (loot.isPresent) {
-      loot.get().interact("Take")
-      // Wait until it is looted, max out 1.5 seconds
-      Waiting.waitUntil(1500) {
-        !Query.groundItems()
-            .filter { it.name.lowercase() in itemsToLoot }
-            .findBestInteractable()
-            .isPresent
+      val lootItem = loot.get()
+      val itemName = lootItem.name
+      val initialCount = Query.inventory().nameEquals(itemName).count()
+
+      lootItem.interact("Take")
+
+      val lootedSuccessfully =
+          Waiting.waitUntil(1500) {
+            val newCount = Query.inventory().nameEquals(itemName).count()
+            newCount > initialCount
+          }
+
+      if (lootedSuccessfully) {
+        val finalCount = Query.inventory().nameEquals(itemName).count()
+        val amountLooted = finalCount - initialCount
+
+        // Add the looted item to the EconomyTracker
+        EconomyTracker.getInstance().addLootedItem(lootItem.id, amountLooted)
       }
     }
   }

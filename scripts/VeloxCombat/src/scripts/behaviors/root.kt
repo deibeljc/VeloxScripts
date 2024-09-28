@@ -19,5 +19,6 @@ val stateMachine = createStateMachine {
   combatState on { Inventory.isFull() } to bankState
   bankState on { !Inventory.isFull() } to combatState
   fishState on { InventoryHelper.hasRawFood() && InventoryHelper.rawFoodCount() >= 10 } to cookState
+  fishState on { Inventory.isFull() && InventoryHelper.hasNonFood() } to bankState
   cookState on { InventoryHelper.hasFood() && InventoryHelper.rawFoodCount() == 0 } to combatState
 }

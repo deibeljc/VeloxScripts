@@ -46,8 +46,13 @@ class InventoryHelper {
       return Query.inventory().filter { !isRequiredItem(it) }.count() > 0
     }
 
+    /** Get all non food items that are also not raw food that is to be cooked */
     fun getNonFoodItems(): List<InventoryItem> {
-      return Query.inventory().filter { !isRequiredItem(it) }.actionNotContains("Eat").toList()
+      return Query.inventory()
+          .filter { !isRequiredItem(it) }
+          .filter { !it.name.contains("Raw") }
+          .actionNotContains("Eat")
+          .toList()
     }
 
     fun isRequiredItem(item: InventoryItem): Boolean {
