@@ -63,10 +63,11 @@ fun IParentNode.loot() = sequence {
       val lootItem = loot.get()
       val itemName = lootItem.name
       val item = Query.inventory().nameEquals(itemName)
-      var initialCount = item.count()
+      var initialCount = Query.inventory().nameEquals(itemName).count()
 
-      if (item.findFirst().get().stack > 1) {
-        initialCount = item.findFirst().get().stack
+      val invItem = item.findFirst()
+      if (invItem.isPresent && invItem.get().stack > 1) {
+        initialCount = invItem.get().stack
       }
 
       lootItem.interact("Take")
@@ -120,6 +121,6 @@ fun IParentNode.eatFood() = sequence {
 
 fun IParentNode.fightNearestEnemy(trainingArea: MonsterArea?) = selector {
   // Don't get an enemy if we are already in combat or if there are coins to be looted
-  condition("Wait Until In Combat") { CombatHelper.isInCombat() || lastEnemy?.isValid == true }
+  condition("Is in Combat") { CombatHelper.isInCombat() || lastEnemy?.isValid == true }
   perform("Fight Nearest Enemy") { lastEnemy = CombatHelper.fightNearestEnemy(trainingArea) }
 }

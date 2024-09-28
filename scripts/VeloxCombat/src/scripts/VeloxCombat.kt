@@ -2,9 +2,6 @@ package scripts
 
 import dax.api_lib.DaxWalker
 import dax.teleports.Teleport
-import java.awt.Color
-import java.awt.Graphics
-import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.ScriptListening
@@ -17,9 +14,13 @@ import scripts.behaviors.setupState
 import scripts.behaviors.stateMachine
 import scripts.gui.VeloxCombatGUIState
 import scripts.utils.viz.ProgressBar
+import java.awt.Color
+import java.awt.Graphics
+import java.util.concurrent.atomic.AtomicReference
 
 @TribotScriptManifest(
-    name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script.")
+  name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script."
+)
 class VeloxCombat : TribotScript {
   // Properties
   private val experienceTracker = ExperienceTracker()
@@ -36,6 +37,7 @@ class VeloxCombat : TribotScript {
   }
 
   override fun execute(args: String) {
+    Log.info("VeloxCombat executing with args: $args")
     setupScript(args)
     runMainLoop()
     cleanup()
@@ -70,11 +72,11 @@ class VeloxCombat : TribotScript {
 
   private fun setupScriptListeners() {
     ScriptListening.addPreEndingListener(
-        Runnable {
-          VeloxCombatGUIState.closeGUI()
-          VeloxCombatGUIState.stopRunning()
-          Log.info("Script is ending")
-        })
+      Runnable {
+        VeloxCombatGUIState.closeGUI()
+        VeloxCombatGUIState.stopRunning()
+        Log.info("Script is ending")
+      })
   }
 
   private fun runMainLoop() {
@@ -110,10 +112,10 @@ class VeloxCombat : TribotScript {
         val (setting, value) = parts.map { it.trim() }
         when (setting.lowercase()) {
           "eathealth" ->
-              VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
+            VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
 
           "eattofull" ->
-              VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
+            VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
         }
       }
     }

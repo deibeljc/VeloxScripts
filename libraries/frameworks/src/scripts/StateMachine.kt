@@ -13,7 +13,7 @@ class State(
   val transitions = mutableListOf<Transition>()
 }
 
-data class Transition(val condition: () -> Boolean, val toState: State)
+data class Transition(val condition: () -> Boolean, val toState: State, val priority: Int = 0)
 
 // StateMachine Class with stateChangeListener
 class StateMachine(val states: List<State>, initialState: State? = null) {
@@ -43,9 +43,10 @@ class StateMachine(val states: List<State>, initialState: State? = null) {
     var transitioned: Boolean
     do {
       transitioned = false
-      for (transition in currentState?.transitions ?: emptyList()) {
+      val sortedTransitions = (currentState?.transitions ?: emptyList()).sortedBy { it.priority }
+      for (transition in sortedTransitions) {
         if (transition.condition()) {
-          Log.info("Transitioning to ${transition.toState.name}")
+          Log.info("Transitioning to ${transition.toState.name} (priority: ${transition.priority})")
           currentState = transition.toState
           enterState(currentState)
           transitioned = true
@@ -110,7 +111,7 @@ fun createState(name: String, block: StateBuilder.() -> Unit): State {
 // StateMachineBuilder Class with corrections
 class StateMachineBuilder {
   private val states = mutableSetOf<State>()
-  private val globalTransitions = mutableListOf<Pair<() -> Boolean, State>>()
+  private val globalTransitions = mutableListOf<Transition>()
 
   fun state(name: String, block: StateBuilder.() -> Unit): State {
     val state = createState(name, block)
@@ -119,35 +120,55 @@ class StateMachineBuilder {
   }
 
   infix fun State.on(condition: () -> Boolean): TransitionBuilder {
-    states.add(this) // Ensure 'from' state is added
-    return TransitionBuilder(this, condition)
+    states.add(this)
+    return TransitionBuilder(this, condition, 0)
+  }
+
+  fun State.withPriority(priority: Int): StateTransitionInitializer {
+    states.add(this)
+    return StateTransitionInitializer(this, priority)
   }
 
   fun any(block: AnyTransitionBuilder.() -> Unit) {
     AnyTransitionBuilder().apply(block)
   }
 
+  inner class StateTransitionInitializer(private val state: State, private val priority: Int) {
+    infix fun on(condition: () -> Boolean): TransitionBuilder {
+      return TransitionBuilder(state, condition, priority)
+    }
+  }
+
   inner class TransitionBuilder(
       private val fromState: State,
-      private val condition: () -> Boolean
+      private val condition: () -> Boolean,
+      private val priority: Int
   ) {
     infix fun to(toState: State) {
-      fromState.transitions.add(Transition(condition, toState))
-      states.add(toState) // Ensure 'to' state is added
+      fromState.transitions.add(Transition(condition, toState, priority))
+      states.add(toState)
     }
   }
 
   inner class AnyTransitionBuilder {
     infix fun on(condition: () -> Boolean): AnyTransitionBuilder {
-      return this.also { it.condition = condition }
+      this.condition = condition
+      this.priority = 0
+      return this
+    }
+
+    fun withPriority(priority: Int): AnyTransitionBuilder {
+      this.priority = priority
+      return this
     }
 
     infix fun to(toState: State) {
-      globalTransitions.add(condition to toState)
-      states.add(toState) // Ensure 'to' state is added
+      globalTransitions.add(Transition(condition, toState, priority))
+      states.add(toState)
     }
 
     private lateinit var condition: () -> Boolean
+    private var priority: Int = 0
   }
 
   fun build(initialState: State? = null): StateMachine {

@@ -14,14 +14,15 @@ val bankState = createState("Bank") { tree { behaviorTree { depositItems() } } }
 val setupState = createState("Init") { tree { behaviorTree { setupNode() } } }
 
 val stateMachine = createStateMachine {
-  setupState on { InventoryHelper.hasRequiredItems() } to combatState
-  setupState on { !Inventory.isFull() && !InventoryHelper.hasFood() } to fishState
+  setupState.withPriority(3) on { InventoryHelper.hasRequiredItems() && InventoryHelper.hasFood() } to combatState
+  setupState.withPriority(1) on { !Inventory.isFull() && !InventoryHelper.hasFood() } to fishState
+  setupState.withPriority(2) on { InventoryHelper.hasRawFood() } to cookState
 
   combatState on { !InventoryHelper.hasFood() } to fishState
 
   any {
-    on { !InventoryHelper.hasRequiredItems() } to setupState
-    on { Inventory.isFull() && InventoryHelper.hasNonFood() } to bankState
+    withPriority(1) on { !InventoryHelper.hasRequiredItems() } to setupState
+    withPriority(2) on { Inventory.isFull() && InventoryHelper.hasNonFood() } to bankState
   }
 
   fishState on

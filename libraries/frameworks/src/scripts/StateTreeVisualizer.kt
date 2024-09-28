@@ -4,26 +4,42 @@ import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.RenderingHints
-import org.tribot.script.sdk.Log
+import java.awt.event.KeyEvent
+import org.tribot.script.sdk.ScriptListening
+import org.tribot.script.sdk.interfaces.EventOverride
+import org.tribot.script.sdk.interfaces.KeyEventOverrideListener
 import scripts.behaviortree.BehaviorTreeStatus
 import scripts.behaviortree.IBehaviorNode
 
 class StateTreeVisualizer(private val stateMachine: StateMachine) {
   private val nodeHeight = 30
   private val nodeWidth = 120
-  private val verticalSpacing = 20 // Reduced from 50
+  private val verticalSpacing = 20
   private val horizontalSpacing = 20
   private val folderWidth = 80
   private val folderHeight = 40
+
+  private var scrollOffset = 0
+  private val scrollBarWidth = 20
+  private val scrollBarMinHeight = 50
 
   fun render(g: Graphics2D, width: Int, height: Int) {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.font = Font("Arial", Font.PLAIN, 12)
 
-    val rootX = 50
-    val rootY = 50
+    val rootX = 300
+    val rootY = 50 - scrollOffset
 
-    renderStateMachine(g, stateMachine, rootX, rootY, 0)
+    // Create a clipping region for the main content
+    g.clipRect(0, 0, width - scrollBarWidth, height)
+
+    val totalHeight = renderStateMachine(g, stateMachine, rootX, rootY, 0)
+
+    // Reset the clip
+    g.clip = null
+
+    // Render scrollbar
+    renderScrollBar(g, width, height, totalHeight)
   }
 
   private fun renderStateMachine(g: Graphics2D, sm: StateMachine, x: Int, y: Int, level: Int): Int {
@@ -41,14 +57,14 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
     for (state in sm.states) {
       val stateHeight =
           renderState(g, state, x + horizontalSpacing, currentY, level, sm.currentState == state)
-      currentY += stateHeight + verticalSpacing / 2 // Reduced spacing after state
+      currentY += stateHeight + verticalSpacing / 4 // Reduced spacing after state
 
       // Calculate and render behavior tree
-      val treeHeight = calculateBehaviorTreeHeight(state.tree?.root())
-      Log.info("State ${state.name} Tree Height: $treeHeight State Height: $stateHeight")
+      val treeHeight =
+          folderHeight + verticalSpacing * 4 + calculateBehaviorTreeHeight(state.tree?.root())
       if (treeHeight > 0) {
         renderBehaviorTree(g, state, x + horizontalSpacing * 2, currentY)
-        currentY += treeHeight + verticalSpacing / 2 // Reduced spacing after behavior tree
+        currentY += treeHeight + verticalSpacing / 4 // Reduced spacing after behavior tree
       }
 
       maxWidth = maxOf(maxWidth, nodeWidth + horizontalSpacing)
@@ -86,8 +102,7 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
   private fun calculateBehaviorTreeHeight(node: IBehaviorNode?): Int {
     if (node == null) return 0
     val childrenHeight = node.children.sumOf { calculateBehaviorTreeHeight(it) }
-    val nodeHeight = folderHeight + verticalSpacing
-    return nodeHeight + (if (node.children.isNotEmpty()) childrenHeight else 0)
+    return verticalSpacing + childrenHeight
   }
 
   private fun renderBehaviorTree(g: Graphics2D, state: State, x: Int, y: Int): Int {
@@ -106,10 +121,9 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
       y: Int,
       depth: Int
   ): Int {
-    val folderWidth = 120
     val folderHeight = 20
     val indentation = 20
-    val verticalSpacing = 5
+    val verticalSpacing = 2
 
     val status = node.status
     val color =
@@ -117,9 +131,13 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
           BehaviorTreeStatus.SUCCESS -> Color.GREEN
           BehaviorTreeStatus.FAILURE -> Color.RED
           BehaviorTreeStatus.RUNNING -> Color.YELLOW
-          BehaviorTreeStatus.KILL -> Color.BLACK
-          else -> Color.GRAY
+          BehaviorTreeStatus.IDLE -> Color.BLACK
+          else -> Color.BLACK
         }
+
+    val nodeName = "[${node.javaClass.simpleName}] ${node.label ?: ""}"
+    val metrics = g.fontMetrics
+    val folderWidth = metrics.stringWidth(nodeName) + 10 // Add some padding
 
     // Draw folder
     g.color = Color.LIGHT_GRAY
@@ -127,7 +145,7 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
     g.color = color
     g.drawRect(x + depth * indentation, y, folderWidth, folderHeight)
     g.color = Color.BLACK
-    g.drawString(node.label ?: node.javaClass.simpleName, x + depth * indentation + 5, y + 15)
+    g.drawString(nodeName, x + depth * indentation + 5, y + 15)
 
     // Draw children
     var childY = y + folderHeight + verticalSpacing
@@ -139,5 +157,37 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
     }
 
     return totalHeight
+  }
+
+  private fun renderScrollBar(g: Graphics2D, width: Int, height: Int, totalHeight: Int) {
+    val viewportRatio = height.toFloat() / totalHeight
+    val scrollBarHeight =
+        (height * viewportRatio).coerceAtLeast(scrollBarMinHeight.toFloat()).toInt()
+    val scrollBarY = (scrollOffset.toFloat() / totalHeight * height).toInt()
+
+    // Draw scrollbar background
+    g.color = Color.LIGHT_GRAY
+    g.fillRect(width - scrollBarWidth, 0, scrollBarWidth, height)
+
+    // Draw scrollbar thumb
+    g.color = Color.GRAY
+    g.fillRect(width - scrollBarWidth, scrollBarY, scrollBarWidth, scrollBarHeight)
+  }
+
+  fun setupScrollListener() {
+    ScriptListening.addKeyEventOverrideListener(
+        KeyEventOverrideListener { event ->
+          if (event.id == KeyEvent.KEY_PRESSED) {
+            when (event.keyCode) {
+              KeyEvent.VK_UP -> scrollOffset -= 100
+              KeyEvent.VK_DOWN -> scrollOffset += 100
+            }
+          }
+          return@KeyEventOverrideListener EventOverride.DISMISS
+        })
+  }
+
+  fun handleScroll(scrollAmount: Int, totalHeight: Int, height: Int) {
+    scrollOffset = (scrollOffset + scrollAmount).coerceIn(0, totalHeight - height)
   }
 }

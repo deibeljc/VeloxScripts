@@ -1,6 +1,7 @@
 package scripts
 
 import kotlinx.coroutines.*
+import org.tribot.script.sdk.GameState
 import org.tribot.script.sdk.painting.Painting
 import org.tribot.script.sdk.painting.template.basic.BasicPaintTemplate
 import org.tribot.script.sdk.painting.template.basic.PaintLocation
@@ -23,6 +24,7 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
   private val topMargin = 10 // New: Top margin in pixels
   private val TARGET_FPS = 60
   private val FRAME_TIME = 1000L / TARGET_FPS
+  private val stateTreeVisualizer = StateTreeVisualizer(stateMachine)
 
   data class RenderItem(
     var renderFunction: (Graphics, Float, Float, Float) -> Unit,
@@ -34,10 +36,12 @@ class PaintManager(private val experienceTracker: ExperienceTracker) {
   )
 
   fun setupPaint() {
+    stateTreeVisualizer.setupScrollListener()
+    
     Painting.addPaint { g ->
       paint.build().render(g)
       renderStack(g)
-      StateTreeVisualizer(stateMachine).render(g, 100, 100)
+      stateTreeVisualizer.render(g, GameState.getViewportWidth(), GameState.getViewportHeight())
     }
   }
 
