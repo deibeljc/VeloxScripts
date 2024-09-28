@@ -1,12 +1,14 @@
 package scripts.frameworks
 
 import org.tribot.script.sdk.Log
+import scripts.behaviortree.BehaviorTree
 
 // State and Transition Classes
 class State(
-  val name: String,
-  val action: () -> Unit = {},
-  val nestedStateMachine: StateMachine? = null
+    val name: String,
+    val action: () -> Unit = {},
+    val tree: BehaviorTree? = null,
+    val nestedStateMachine: StateMachine? = null
 ) {
   val transitions = mutableListOf<Transition>()
 }
@@ -55,6 +57,9 @@ class StateMachine(val states: List<State>, initialState: State? = null) {
     // After all transitions, process the nested state machine and invoke the action
     currentState?.nestedStateMachine?.step()
     currentState?.action?.invoke()
+    // Step the behavior tree
+    val result = currentState?.tree?.tick()
+    Log.info("Behavior tree result: $result")
   }
 
   private fun enterState(state: State?) {
@@ -77,6 +82,7 @@ class StateMachine(val states: List<State>, initialState: State? = null) {
 // StateBuilder Class
 class StateBuilder {
   var action: () -> Unit = {}
+  var tree: () -> BehaviorTree? = { null }
   var nestedStateMachine: StateMachine? = null
 
   fun action(action: () -> Unit) {
@@ -88,13 +94,17 @@ class StateBuilder {
     builder.block()
     this.nestedStateMachine = builder.build()
   }
+
+  fun tree(block: () -> BehaviorTree) {
+    this.tree = block
+  }
 }
 
 // Top-level State Function
 fun createState(name: String, block: StateBuilder.() -> Unit): State {
   val builder = StateBuilder()
   builder.block()
-  return State(name, builder.action, builder.nestedStateMachine)
+  return State(name, builder.action, builder.tree(), builder.nestedStateMachine)
 }
 
 // StateMachineBuilder Class with corrections
@@ -118,8 +128,8 @@ class StateMachineBuilder {
   }
 
   inner class TransitionBuilder(
-    private val fromState: State,
-    private val condition: () -> Boolean
+      private val fromState: State,
+      private val condition: () -> Boolean
   ) {
     infix fun to(toState: State) {
       fromState.transitions.add(Transition(condition, toState))
@@ -155,8 +165,8 @@ class StateMachineBuilder {
 
 // Top-level StateMachine Function
 fun createStateMachine(
-  initialState: State? = null,
-  block: StateMachineBuilder.() -> Unit
+    initialState: State? = null,
+    block: StateMachineBuilder.() -> Unit
 ): StateMachine {
   val builder = StateMachineBuilder()
   builder.block()

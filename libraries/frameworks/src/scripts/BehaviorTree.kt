@@ -11,10 +11,13 @@ enum class BehaviorTreeStatus {
 // Interface for all nodes in the behavior tree
 interface IBehaviorNode {
   val label: String?
-
-  fun tick(): BehaviorTreeStatus
-
   val children: List<IBehaviorNode>
+  
+  // Add a read-only property for status
+  val status: BehaviorTreeStatus
+
+  // Change tick() to return Unit and update status
+  fun tick()
 }
 
 // Base class for parent nodes
@@ -23,6 +26,10 @@ abstract class IParentNode(override val label: String? = null) : IBehaviorNode {
   override val children: List<IBehaviorNode>
     get() = _children
 
+  // Add status property
+  override var status: BehaviorTreeStatus = BehaviorTreeStatus.RUNNING
+    protected set
+
   fun addChild(node: IBehaviorNode) {
     _children.add(node)
   }
@@ -30,64 +37,71 @@ abstract class IParentNode(override val label: String? = null) : IBehaviorNode {
 
 // Sequence node: succeeds if all children succeed
 class SequenceNode(label: String? = null) : IParentNode(label) {
-  override fun tick(): BehaviorTreeStatus {
+  override fun tick() {
     for (child in children) {
-      val status = child.tick()
-      if (status != BehaviorTreeStatus.SUCCESS) {
-        return status
+      child.tick()
+      if (child.status != BehaviorTreeStatus.SUCCESS) {
+        status = child.status
+        return
       }
     }
-    return BehaviorTreeStatus.SUCCESS
+    status = BehaviorTreeStatus.SUCCESS
   }
 }
 
 // Selector node: succeeds if any child succeeds
 class SelectorNode(label: String? = null) : IParentNode(label) {
-  override fun tick(): BehaviorTreeStatus {
+  override fun tick() {
     for (child in children) {
-      val status = child.tick()
-      if (status == BehaviorTreeStatus.SUCCESS) {
-        return BehaviorTreeStatus.SUCCESS
-      } else if (status == BehaviorTreeStatus.KILL) {
-        return BehaviorTreeStatus.KILL
+      child.tick()
+      if (child.status == BehaviorTreeStatus.SUCCESS) {
+        status = BehaviorTreeStatus.SUCCESS
+        return
+      } else if (child.status == BehaviorTreeStatus.KILL) {
+        status = BehaviorTreeStatus.KILL
+        return
       }
     }
-    return BehaviorTreeStatus.FAILURE
+    status = BehaviorTreeStatus.FAILURE
   }
 }
 
 // Condition node: evaluates a boolean condition
-class ConditionNode(override val label: String? = null, private val condition: () -> Boolean) :
-  IBehaviorNode {
+class ConditionNode(override val label: String? = null, private val condition: () -> Boolean) : IBehaviorNode {
   override val children: List<IBehaviorNode> = emptyList()
+  override var status: BehaviorTreeStatus = BehaviorTreeStatus.RUNNING
+    private set
 
-  override fun tick(): BehaviorTreeStatus {
-    return if (condition()) BehaviorTreeStatus.SUCCESS else BehaviorTreeStatus.FAILURE
+  override fun tick() {
+    status = if (condition()) BehaviorTreeStatus.SUCCESS else BehaviorTreeStatus.FAILURE
   }
 }
 
 // Perform node: executes an action and always returns success
-class PerformNode(override val label: String? = null, private val action: () -> Unit) :
-  IBehaviorNode {
+class PerformNode(override val label: String? = null, private val action: () -> Unit) : IBehaviorNode {
   override val children: List<IBehaviorNode> = emptyList()
+  override var status: BehaviorTreeStatus = BehaviorTreeStatus.RUNNING
+    private set
 
-  override fun tick(): BehaviorTreeStatus {
+  override fun tick() {
     action()
-    return BehaviorTreeStatus.SUCCESS
+    status = BehaviorTreeStatus.SUCCESS
   }
 }
 
 // Conditional decorator node: runs child if condition is true
-class ConditionalNode(private val condition: () -> Boolean, private val child: IBehaviorNode) :
-  IBehaviorNode {
+class ConditionalNode(private val condition: () -> Boolean, private val child: IBehaviorNode) : IBehaviorNode {
   override val label: String = "Conditional"
   override val children: List<IBehaviorNode> = listOf(child)
+  override var status: BehaviorTreeStatus = BehaviorTreeStatus.RUNNING
+    private set
 
-  override fun tick(): BehaviorTreeStatus {
-    return if (condition()) {
+  override fun tick() {
+    if (condition()) {
       child.tick()
+      status = child.status
     } else {
-      BehaviorTreeStatus.FAILURE
+      status = BehaviorTreeStatus.FAILURE
     }
   }
 }
@@ -99,12 +113,15 @@ class RepeatUntilNode(
 ) : IBehaviorNode {
   override val label: String = "RepeatUntil"
   override val children: List<IBehaviorNode> = listOf(child)
+  override var status: BehaviorTreeStatus = BehaviorTreeStatus.RUNNING
+    private set
 
-  override fun tick(): BehaviorTreeStatus {
+  override fun tick() {
     while (true) {
-      val status = child.tick()
-      if (stopStatus() || status == BehaviorTreeStatus.KILL) {
-        return status
+      child.tick()
+      if (stopStatus() || child.status == BehaviorTreeStatus.KILL) {
+        status = child.status
+        return
       }
     }
   }
@@ -112,8 +129,11 @@ class RepeatUntilNode(
 
 // BehaviorTree class to build and execute the tree
 class BehaviorTree(private val root: IBehaviorNode) {
-  fun tick(): BehaviorTreeStatus {
-    return root.tick()
+  fun tick() {
+    root.tick()
+  }
+  fun root(): IBehaviorNode {
+    return root
   }
 }
 

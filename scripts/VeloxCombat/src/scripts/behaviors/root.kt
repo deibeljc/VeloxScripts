@@ -7,11 +7,11 @@ import scripts.frameworks.createState
 import scripts.frameworks.createStateMachine
 import scripts.gui.VeloxCombatGUIState
 
-val combatState = createState("Combat") { action { behaviorTree { combatNode() }.tick() } }
-val cookState = createState("Cook") { action { behaviorTree { cookNode() }.tick() } }
-val fishState = createState("Fish") { action { behaviorTree { fishNode() }.tick() } }
-val bankState = createState("Bank") { action { behaviorTree { depositItems() }.tick() } }
-val setupState = createState("Init") { action { behaviorTree { setupNode() }.tick() } }
+val combatState = createState("Combat") { tree { behaviorTree { combatNode() } } }
+val cookState = createState("Cook") { tree { behaviorTree { cookNode() } } }
+val fishState = createState("Fish") { tree { behaviorTree { fishNode() } } }
+val bankState = createState("Bank") { tree { behaviorTree { depositItems() } } }
+val setupState = createState("Init") { tree { behaviorTree { setupNode() } } }
 
 val stateMachine = createStateMachine {
   setupState on { InventoryHelper.hasRequiredItems() } to combatState
@@ -25,11 +25,11 @@ val stateMachine = createStateMachine {
   }
 
   fishState on
-          {
-            InventoryHelper.hasRawFood() &&
-                    InventoryHelper.rawFoodCount() >= VeloxCombatGUIState.foodToReplenish.value
-          } to
-          cookState
+      {
+        InventoryHelper.hasRawFood() &&
+            InventoryHelper.rawFoodCount() >= VeloxCombatGUIState.foodToReplenish.value
+      } to
+      cookState
   cookState on { InventoryHelper.hasFood() && InventoryHelper.rawFoodCount() == 0 } to combatState
   bankState on { !Inventory.isFull() } to combatState
 }

@@ -17,14 +17,14 @@ class TreeVisualizer(private val root: IBehaviorNode) {
   }
 
   private fun renderNode(g: Graphics2D, node: IBehaviorNode, x: Int, y: Int, depth: Int) {
-    val status = node.tick()
+    val status = node.status
     val color =
-      when (status) {
-        BehaviorTreeStatus.SUCCESS -> Color.GREEN
-        BehaviorTreeStatus.FAILURE -> Color.RED
-        BehaviorTreeStatus.RUNNING -> Color.YELLOW
-        BehaviorTreeStatus.KILL -> Color.BLACK
-      }
+        when (status) {
+          BehaviorTreeStatus.SUCCESS -> Color.GREEN
+          BehaviorTreeStatus.FAILURE -> Color.RED
+          BehaviorTreeStatus.RUNNING -> Color.YELLOW
+          BehaviorTreeStatus.KILL -> Color.BLACK
+        }
 
     g.color = color
     g.drawRect(x, y, nodeWidth, nodeHeight)
