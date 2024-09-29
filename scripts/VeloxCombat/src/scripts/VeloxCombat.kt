@@ -149,7 +149,7 @@ class VeloxCombat : TribotScript {
       paintManager.pushToRenderStack(skill.name, progressBarRender, 200, height)
 
       // Add inactivity status listener
-      experienceTracker.addInactivityStatusListener(skill) { isInactive ->
+      experienceTracker.addActivityStatusListener(skill) { isInactive ->
         if (isInactive) {
           paintManager.removeFromRenderStack(skill.name)
           Log.info("Removed ${skill.name} from render stack due to inactivity")

@@ -109,7 +109,6 @@ fun createState(name: String, block: StateBuilder.() -> Unit): State {
   return State(name, builder.action, builder.tree(), builder.nestedStateMachine)
 }
 
-// StateMachineBuilder Class with corrections
 class StateMachineBuilder {
   private val states = mutableSetOf<State>()
   private val globalTransitions = mutableListOf<Transition>()

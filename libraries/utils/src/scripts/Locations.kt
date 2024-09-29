@@ -121,6 +121,22 @@ enum class Monster(
       listOf(
           "Highly crowded in most worlds.",
           "They can be a bit rough and tough against lower levels.")),
+  MOSS_GIANT(
+      "Moss Giant",
+      42,
+      60,
+      "Varrock Sewers, Crandor",
+      listOf(
+          "Fairly high HP for level.",
+          "Decent alchable drops such as black sq shield, mithril sword, and steel kiteshield.",
+          "Good rune drops such as law runes, nature runes, chaos runes, cosmic runes, and rarely death runes.",
+          "Chance of dropping a mossy key, which allows the player to fight Bryophyta.",
+          "Always drops big bones which can be sold for guaranteed profit or used for Prayer experience while training.",
+          "They have access to the gem drop table and rarely drop uncut gems."),
+      listOf(
+          "Varrock Sewers are often crowded.",
+          "Hits hard if you have low Defence or weak armour.",
+          "All of their (F2P) locations are far from a bank")),
 }
 
 data class MonsterArea(
@@ -208,7 +224,7 @@ object Locations {
           MonsterArea(
               "Lumbridge Swamp",
               20,
-              40,
+              30,
               listOf(Monster.GIANT_FROG),
               Area.fromPolygon(
                   WorldTile(3155, 3207),
@@ -248,8 +264,8 @@ object Locations {
               "Bring your best armour (chainbody recommended) and weapons."),
           MonsterArea(
               "Hill Giant",
-              40,
-              60,
+              30,
+              45,
               listOf(Monster.HILL_GIANT),
               Area.fromPolygon(
                   WorldTile(3116, 9854, 0),
@@ -284,7 +300,26 @@ object Locations {
               WorldTile(3103, 3434),
               listOf(axe, tinderbox, flyfishingrod, feathers),
               "None",
-              "Your best weapon and armour."))
+              "Your best weapon and armour."),
+          MonsterArea(
+              "Moss Giant",
+              42,
+              60,
+              listOf(Monster.MOSS_GIANT),
+              Area.fromPolygon(
+                  WorldTile(3150, 9860, 0),
+                  WorldTile(3160, 9860, 0),
+                  WorldTile(3160, 9850, 0),
+                  WorldTile(3150, 9850, 0)),
+              Area.fromPolygon(
+                  WorldTile(3150, 3400, 0),
+                  WorldTile(3160, 3400, 0),
+                  WorldTile(3160, 3390, 0),
+                  WorldTile(3150, 3390, 0)),
+              WorldTile(3155, 3395),
+              listOf(axe, tinderbox, flyfishingrod, feathers),
+              "Varrock Sewers, Crandor",
+              "Food, armour (chainbody recommended), staff of fire and nature runes for High Level Alchemy, runes for Varrock Teleport"))
 
   fun getBestTrainingArea(): MonsterArea {
     val playerLevel = MyPlayer.getCombatLevel()

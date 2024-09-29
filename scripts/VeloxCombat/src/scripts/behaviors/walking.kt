@@ -17,7 +17,7 @@ fun IParentNode.walk(destination: WorldTile, name: String?) = selector {
 
 fun IParentNode.walk(destination: Area, name: String?) = selector {
   condition("At spot") { atSpot(destination) }
-  perform { walkTo(destination.center, name, VeloxState::setState) }
+  condition { walkTo(destination.center, name, VeloxState::setState) }
 }
 
 fun atSpot(destination: WorldTile): Boolean {
