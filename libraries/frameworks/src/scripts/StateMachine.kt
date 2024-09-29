@@ -1,14 +1,13 @@
 package scripts.frameworks
 
 import org.tribot.script.sdk.Log
-import scripts.behaviortree.BehaviorTree
 
 // State and Transition Classes
 class State(
-    val name: String,
-    val action: () -> Unit = {},
-    val tree: BehaviorTree? = null,
-    val nestedStateMachine: StateMachine? = null
+  val name: String,
+  val action: () -> Unit = {},
+  val tree: BehaviorTree? = null,
+  val nestedStateMachine: StateMachine? = null
 ) {
   val transitions = mutableListOf<Transition>()
 }
@@ -47,6 +46,9 @@ class StateMachine(val states: List<State>, initialState: State? = null) {
       for (transition in sortedTransitions) {
         if (transition.condition()) {
           Log.info("Transitioning to ${transition.toState.name} (priority: ${transition.priority})")
+          // Reset the existing tree before transitioning to the new state
+          currentState?.tree?.root()?.reset()
+          // Transition to the new state
           currentState = transition.toState
           enterState(currentState)
           transitioned = true
@@ -59,8 +61,7 @@ class StateMachine(val states: List<State>, initialState: State? = null) {
     currentState?.nestedStateMachine?.step()
     currentState?.action?.invoke()
     // Step the behavior tree
-    val result = currentState?.tree?.tick()
-    Log.info("Behavior tree result: $result")
+    currentState?.tree?.tick()
   }
 
   private fun enterState(state: State?) {
@@ -140,9 +141,9 @@ class StateMachineBuilder {
   }
 
   inner class TransitionBuilder(
-      private val fromState: State,
-      private val condition: () -> Boolean,
-      private val priority: Int
+    private val fromState: State,
+    private val condition: () -> Boolean,
+    private val priority: Int
   ) {
     infix fun to(toState: State) {
       fromState.transitions.add(Transition(condition, toState, priority))
@@ -186,8 +187,8 @@ class StateMachineBuilder {
 
 // Top-level StateMachine Function
 fun createStateMachine(
-    initialState: State? = null,
-    block: StateMachineBuilder.() -> Unit
+  initialState: State? = null,
+  block: StateMachineBuilder.() -> Unit
 ): StateMachine {
   val builder = StateMachineBuilder()
   builder.block()

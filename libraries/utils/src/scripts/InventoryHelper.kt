@@ -58,6 +58,16 @@ class InventoryHelper {
       }
     }
 
+    fun getCount(item: String): Int {
+      // If the item is stackable, return the stacksize
+      val stackableItem = Query.inventory().nameContains(item).isStackable().findFirst()
+      if (stackableItem.isPresent) {
+        return stackableItem.get().stack
+      }
+
+      return Query.inventory().nameContains(item).count()
+    }
+
     fun hasRequiredItems(): Boolean {
       val hasRequiredItems =
           getRequiredItems().all { category ->

@@ -6,7 +6,7 @@ import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.query.Query
 import org.tribot.script.sdk.walking.GlobalWalking
 import scripts.InventoryHelper
-import scripts.behaviortree.*
+import scripts.frameworks.*
 import scripts.gui.VeloxCombatGUIState
 import scripts.updateState
 

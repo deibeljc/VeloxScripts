@@ -6,7 +6,7 @@ import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.query.Query
 import scripts.Locations
 import scripts.VeloxState
-import scripts.behaviortree.*
+import scripts.frameworks.*
 import scripts.updateState
 
 fun IParentNode.fishNode() = sequence {

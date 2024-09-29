@@ -20,9 +20,11 @@ class CombatHelper {
       val player = MyPlayer.get().orElse(null)
       val interacting = player.isInteracting
 
-      val anythingInteractingWithMe = Query.npcs().isInteractingWithMe().count() > 0
-      
-      return interacting || anythingInteractingWithMe
+//      val anythingInteractingWithMe = Query.npcs().isInteractingWithMe().actionContains("Attack").count() > 0
+//
+//      Log.info("NPCs interacting with me: ${Query.npcs().isInteractingWithMe().actionContains("Attack").toList()}")
+
+      return interacting
     }
 
     /**

@@ -2,6 +2,9 @@ package scripts
 
 import dax.api_lib.DaxWalker
 import dax.teleports.Teleport
+import java.awt.Color
+import java.awt.Graphics
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.*
 import org.tribot.script.sdk.Log
 import org.tribot.script.sdk.ScriptListening
@@ -14,13 +17,9 @@ import scripts.behaviors.setupState
 import scripts.behaviors.stateMachine
 import scripts.gui.VeloxCombatGUIState
 import scripts.utils.viz.ProgressBar
-import java.awt.Color
-import java.awt.Graphics
-import java.util.concurrent.atomic.AtomicReference
 
 @TribotScriptManifest(
-  name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script."
-)
+    name = "VeloxCombat", author = "Dibes", category = "Combat", description = "A combat script.")
 class VeloxCombat : TribotScript {
   // Properties
   private val experienceTracker = ExperienceTracker()
@@ -72,11 +71,11 @@ class VeloxCombat : TribotScript {
 
   private fun setupScriptListeners() {
     ScriptListening.addPreEndingListener(
-      Runnable {
-        VeloxCombatGUIState.closeGUI()
-        VeloxCombatGUIState.stopRunning()
-        Log.info("Script is ending")
-      })
+        Runnable {
+          VeloxCombatGUIState.closeGUI()
+          VeloxCombatGUIState.stopRunning()
+          Log.info("Script is ending")
+        })
   }
 
   private fun runMainLoop() {
@@ -112,10 +111,10 @@ class VeloxCombat : TribotScript {
         val (setting, value) = parts.map { it.trim() }
         when (setting.lowercase()) {
           "eathealth" ->
-            VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
+              VeloxCombatGUIState.eatHealthPercentage.value = value.toFloatOrNull() ?: 50f
 
           "eattofull" ->
-            VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
+              VeloxCombatGUIState.eatToFull.value = value.toBooleanStrictOrNull() ?: false
         }
       }
     }
@@ -133,9 +132,14 @@ class VeloxCombat : TribotScript {
 
         if (stats != null && xpToNextLevel != null && timeToNextLevel != null) {
           val progress = skill.xpPercentToNextLevel.toDouble() / 100.0
-          val minutes = (timeToNextLevel / 60).toInt()
+          val hours = (timeToNextLevel / 3600).toInt()
+          val minutes = ((timeToNextLevel % 3600) / 60).toInt()
           val seconds = (timeToNextLevel % 60).toInt()
-          val label = "${skill.name}: ${minutes}m ${seconds}s"
+          val levelsGained = stats.levelsGained
+          val label = when {
+            hours > 0 -> "${skill.name} (${skill.currentLevel}, +$levelsGained): ${hours}h ${minutes}m ${seconds}s"
+            else -> "${skill.name} (${skill.currentLevel}, +$levelsGained): ${minutes}m ${seconds}s"
+          }
 
           ProgressBar(180, height, progress, label, Color.BLACK, Color.GREEN).draw(g, x, y, alpha)
         }

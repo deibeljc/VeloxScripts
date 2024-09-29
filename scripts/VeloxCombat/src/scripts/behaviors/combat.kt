@@ -6,8 +6,9 @@ import org.tribot.script.sdk.Waiting
 import org.tribot.script.sdk.query.Query
 import org.tribot.script.sdk.types.Area
 import org.tribot.script.sdk.types.Npc
+import org.tribot.script.sdk.types.WorldTile
 import scripts.*
-import scripts.behaviortree.*
+import scripts.frameworks.*
 import scripts.gui.VeloxCombatGUIState
 
 var lastEnemy: Npc? = null
@@ -15,112 +16,95 @@ var lastEnemy: Npc? = null
 fun IParentNode.combatNode() = sequence {
   updateState("Combat")
   balanceCombatStyle()
-  // resetLastEnemy()
-  val trainingArea = Locations.getBestTrainingArea()
-  walk(trainingArea.area ?: Area.fromPolygon(), trainingArea.name)
+  walk(
+    Locations.getBestTrainingArea().area ?: Area.fromPolygon(), Locations.getBestTrainingArea().name
+  )
   eatFood()
   selector {
     loot()
-    fightNearestEnemy(trainingArea)
+    fightNearestEnemy(Locations.getBestTrainingArea())
+    condition("In combat") { CombatHelper.isInCombat() }
   }
 }
 
-fun IParentNode.resetLastEnemy() = perform {
-  // If last enemy is not targeting us, reset it
-  if (lastEnemy?.isInteractingWithMe() == false) {
-    lastEnemy = null
-  }
-}
-
-fun IParentNode.balanceCombatStyle() = sequence {
-  perform("Balance Combat Style") {
-    Combat.setAttackStyle(CombatHelper.getCombatStyleToUse())
-    Waiting.waitUntil({ Combat.getCurrentAttackStyle() == CombatHelper.getCombatStyleToUse() })
-  }
+fun IParentNode.balanceCombatStyle() = perform("Balance Combat Style") {
+  val desiredStyle = CombatHelper.getCombatStyleToUse()
+  Combat.setAttackStyle(desiredStyle)
+  Waiting.waitUntil { Combat.getCurrentAttackStyle() == desiredStyle }
 }
 
 fun IParentNode.loot() = sequence {
-  val itemsToLoot = VeloxCombatGUIState.lootItems.map { it.lowercase() }
-  // Ensure there are coins on the ground
-  condition("Has Loot") {
-    (Query.groundItems().filter { it.name.lowercase() in itemsToLoot }.count() > 0 ||
-            lastEnemy?.isValid == true) && !CombatHelper.isInCombat()
+  selector("If enemy died, wait for loot to spawn") {
+    condition("Enemy Not Dead") {
+      var enemyDead = false
+      MyPlayer.get().ifPresent { player ->
+        player.interactingCharacter.ifPresent {
+          enemyDead = it.healthBarPercent == 0.0
+        }
+      }
+      !enemyDead
+    }
+    perform("Wait for Loot to Spawn") {
+      Waiting.waitUntil(3000) { Query.groundItems().tileEquals(lastEnemy?.tile ?: WorldTile(0, 0)).count() > 0 }
+    }
+  }
+  condition("Not in Combat") { !CombatHelper.isInCombat() }
+  condition("Loot Available") {
+    val itemsToLoot = VeloxCombatGUIState.lootItems.map { it.lowercase() }
+    Query.groundItems().filter {
+      itemsToLoot.any { playerDefinedLoot -> it.name.lowercase().contains(playerDefinedLoot) }
+    }.isInLineOfSight().toList().isNotEmpty()
   }
   perform("Loot Item") {
-    // If lastEnemy is valid, wait for ground items to be on their tile
-    if (lastEnemy?.isValid == false) {
-      Waiting.waitUntil(2000) {
-        Query.groundItems().filter { it.tile == lastEnemy?.tile }.count() > 0
+    val itemsToLoot = VeloxCombatGUIState.lootItems.map { it.lowercase() }
+    val loot = Query.groundItems().filter {
+      itemsToLoot.any { playerDefinedLoot ->
+        it.name.lowercase().contains(playerDefinedLoot)
       }
-    }
-
-    val loot =
-      Query.groundItems()
-        .filter { itemsToLoot.any { lootItem -> it.name.lowercase().contains(lootItem) } }
-        .isInLineOfSight()
-        .findBestInteractable()
+    }.isInLineOfSight().findBestInteractable()
     if (loot.isPresent) {
       val lootItem = loot.get()
       val itemName = lootItem.name
-      val item = Query.inventory().nameEquals(itemName)
-      var initialCount = Query.inventory().nameEquals(itemName).count()
-
-      val invItem = item.findFirst()
-      if (invItem.isPresent && invItem.get().stack > 1) {
-        initialCount = invItem.get().stack
-      }
+      val initialCount = InventoryHelper.getCount(itemName)
 
       lootItem.interact("Take")
 
-      val lootedSuccessfully =
-        Waiting.waitUntil(1500) {
-          val newCount = Query.inventory().nameEquals(itemName).count()
-          newCount > initialCount
-        }
+      val lootedSuccessfully = Waiting.waitUntil(1500) { InventoryHelper.getCount(itemName) > initialCount }
 
       if (lootedSuccessfully) {
-        val finalCount = Query.inventory().nameEquals(itemName).count()
+        val finalCount = InventoryHelper.getCount(itemName)
         val amountLooted = finalCount - initialCount
 
-        // Track loot, but not if it's bones that we're burying
-        if (!(itemName.contains("bones", ignoreCase = true) &&
-                  VeloxCombatGUIState.buryBones.value)
-        ) {
+        // Track loot unless it's bones we're burying
+        if (!(itemName.contains("bones", ignoreCase = true) && VeloxCombatGUIState.buryBones.value)) {
           EconomyTracker.getInstance().addLootedItem(lootItem.id, amountLooted)
         }
       }
 
       if (VeloxCombatGUIState.buryBones.value) {
-        // Bury the bones in your inventory now
-        Query.inventory().actionEquals("Bury").forEach {
-          it.click()
-          Waiting.waitUntil({ MyPlayer.isAnimating() })
-          Waiting.waitUntil({ !MyPlayer.isAnimating() })
+        // Bury bones in inventory
+        Query.inventory().nameContains("bones").forEach {
+          it.click("Bury")
+          Waiting.waitUntil { MyPlayer.isAnimating() }
+          Waiting.waitUntil { !MyPlayer.isAnimating() }
         }
       }
     }
   }
 }
 
-fun IParentNode.eatFood() = sequence {
-  selector {
-    condition("Health Below Eat Percentage or Eat to Full") {
-      MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value
-    }
-    // Eat food until we are above the eat health percentage or we are eating to full depending on
-    // the setting
-    repeatUntil({
-      MyPlayer.getCurrentHealthPercent() == 100.0 && VeloxCombatGUIState.eatToFull.value ||
-              (!VeloxCombatGUIState.eatToFull.value &&
-                      MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value)
-    }) {
-      perform("Eat Food") { InventoryHelper.eatFood() }
-    }
+fun IParentNode.eatFood() = selector {
+  condition("Needs to Eat") {
+    (VeloxCombatGUIState.eatToFull.value && MyPlayer.getCurrentHealthPercent() == 100.0) || (!VeloxCombatGUIState.eatToFull.value && MyPlayer.getCurrentHealthPercent() >= VeloxCombatGUIState.eatHealthPercentage.value)
+  }
+  repeatUntil({
+    (VeloxCombatGUIState.eatToFull.value && MyPlayer.getCurrentHealthPercent() == 100.0) || (!VeloxCombatGUIState.eatToFull.value && MyPlayer.getCurrentHealthPercent() > VeloxCombatGUIState.eatHealthPercentage.value)
+  }) {
+    perform("Eat Food") { InventoryHelper.eatFood() }
   }
 }
 
-fun IParentNode.fightNearestEnemy(trainingArea: MonsterArea?) = selector {
-  // Don't get an enemy if we are already in combat or if there are coins to be looted
-  condition("Is in Combat") { CombatHelper.isInCombat() || lastEnemy?.isValid == true }
-  perform("Fight Nearest Enemy") { lastEnemy = CombatHelper.fightNearestEnemy(trainingArea) }
+fun IParentNode.fightNearestEnemy(trainingArea: MonsterArea?) = sequence {
+  condition("Not in Combat") { !CombatHelper.isInCombat() }
+  perform("Fight Nearest Enemy") { CombatHelper.fightNearestEnemy(trainingArea) }
 }

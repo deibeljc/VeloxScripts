@@ -4,10 +4,10 @@ import org.tribot.script.sdk.MyPlayer
 import org.tribot.script.sdk.types.Area
 import org.tribot.script.sdk.types.WorldTile
 import scripts.VeloxState
-import scripts.behaviortree.IParentNode
-import scripts.behaviortree.condition
-import scripts.behaviortree.perform
-import scripts.behaviortree.selector
+import scripts.frameworks.IParentNode
+import scripts.frameworks.condition
+import scripts.frameworks.perform
+import scripts.frameworks.selector
 import scripts.walkTo
 
 fun IParentNode.walk(destination: WorldTile, name: String?) = selector {

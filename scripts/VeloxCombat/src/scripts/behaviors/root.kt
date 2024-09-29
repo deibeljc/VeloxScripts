@@ -2,7 +2,7 @@ package scripts.behaviors
 
 import org.tribot.script.sdk.Inventory
 import scripts.InventoryHelper
-import scripts.behaviortree.behaviorTree
+import scripts.frameworks.behaviorTree
 import scripts.frameworks.createState
 import scripts.frameworks.createStateMachine
 import scripts.gui.VeloxCombatGUIState
@@ -26,11 +26,11 @@ val stateMachine = createStateMachine {
   }
 
   fishState on
-      {
-        InventoryHelper.hasRawFood() &&
-            InventoryHelper.rawFoodCount() >= VeloxCombatGUIState.foodToReplenish.value
-      } to
-      cookState
+          {
+            InventoryHelper.hasRawFood() &&
+                    InventoryHelper.rawFoodCount() >= VeloxCombatGUIState.foodToReplenish.value
+          } to
+          cookState
   cookState on { InventoryHelper.hasFood() && InventoryHelper.rawFoodCount() == 0 } to combatState
   bankState on { !Inventory.isFull() } to combatState
 }

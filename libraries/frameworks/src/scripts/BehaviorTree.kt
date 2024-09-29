@@ -1,4 +1,4 @@
-package scripts.behaviortree
+package scripts.frameworks
 
 // Define the result types for node execution
 enum class BehaviorTreeStatus {
@@ -14,8 +14,7 @@ interface IBehaviorNode {
   val label: String?
   val children: List<IBehaviorNode>
 
-  // Change the default status to IDLE
-  val status: BehaviorTreeStatus
+  var status: BehaviorTreeStatus // Changed to var
 
   fun tick()
 
@@ -31,7 +30,6 @@ abstract class IParentNode(override val label: String? = null) : IBehaviorNode {
 
   // Change initial status to IDLE
   override var status: BehaviorTreeStatus = BehaviorTreeStatus.IDLE
-    protected set
 
   // Implement reset method
   override fun reset() {
@@ -46,60 +44,136 @@ abstract class IParentNode(override val label: String? = null) : IBehaviorNode {
 
 // Sequence node: succeeds if all children succeed
 class SequenceNode(label: String? = null) : IParentNode(label) {
+  private var currentChildIndex = 0
+
   override fun tick() {
     status = BehaviorTreeStatus.RUNNING
-    for (child in children) {
+
+    while (currentChildIndex < children.size) {
+      val child = children[currentChildIndex]
       child.tick()
-      if (child.status != BehaviorTreeStatus.SUCCESS) {
-        status = child.status
-        return
+      when (child.status) {
+        BehaviorTreeStatus.SUCCESS -> {
+          currentChildIndex++
+        }
+
+        BehaviorTreeStatus.RUNNING -> {
+          return
+        }
+
+        BehaviorTreeStatus.FAILURE, BehaviorTreeStatus.KILL -> {
+          status = child.status
+          resetRemainingChildrenFromIndex(currentChildIndex + 1)
+          currentChildIndex = 0
+          return
+        }
+
+        else -> {
+          status = BehaviorTreeStatus.FAILURE
+          return
+        }
       }
     }
+
+    // All children succeeded
     status = BehaviorTreeStatus.SUCCESS
+    currentChildIndex = 0
+  }
+
+  private fun resetRemainingChildrenFromIndex(startIndex: Int) {
+    for (i in startIndex until children.size) {
+      children[i].reset()
+    }
+  }
+
+  override fun reset() {
+    status = BehaviorTreeStatus.IDLE
+    currentChildIndex = 0
+    _children.forEach { it.reset() }
   }
 }
+
 
 // Selector node: succeeds if any child succeeds
 class SelectorNode(label: String? = null) : IParentNode(label) {
+  private var currentChildIndex = 0
+
   override fun tick() {
     status = BehaviorTreeStatus.RUNNING
-    for (child in children) {
+
+    while (currentChildIndex < children.size) {
+      val child = children[currentChildIndex]
       child.tick()
-      if (child.status == BehaviorTreeStatus.SUCCESS) {
-        status = BehaviorTreeStatus.SUCCESS
-        return
-      } else if (child.status == BehaviorTreeStatus.KILL) {
-        status = BehaviorTreeStatus.KILL
-        return
+      when (child.status) {
+        BehaviorTreeStatus.SUCCESS -> {
+          status = BehaviorTreeStatus.SUCCESS
+          resetRemainingChildrenFromIndex(currentChildIndex + 1)
+          currentChildIndex = 0
+          return
+        }
+
+        BehaviorTreeStatus.RUNNING -> {
+          return
+        }
+
+        BehaviorTreeStatus.FAILURE -> {
+          currentChildIndex++
+        }
+
+        BehaviorTreeStatus.KILL -> {
+          status = BehaviorTreeStatus.KILL
+          resetRemainingChildrenFromIndex(currentChildIndex + 1)
+          currentChildIndex = 0
+          return
+        }
+
+        else -> {
+          status = BehaviorTreeStatus.FAILURE
+          return
+        }
       }
     }
+
+    // All children failed
     status = BehaviorTreeStatus.FAILURE
+    currentChildIndex = 0
+  }
+
+  private fun resetRemainingChildrenFromIndex(startIndex: Int) {
+    for (i in startIndex until children.size) {
+      children[i].reset()
+    }
+  }
+
+  override fun reset() {
+    status = BehaviorTreeStatus.IDLE
+    currentChildIndex = 0
+    _children.forEach { it.reset() }
   }
 }
 
+
 // Condition node: evaluates a boolean condition
 class ConditionNode(override val label: String? = null, private val condition: () -> Boolean) :
-    IBehaviorNode {
+  IBehaviorNode {
   override val children: List<IBehaviorNode> = emptyList()
   override var status: BehaviorTreeStatus = BehaviorTreeStatus.IDLE
-    private set
 
   override fun reset() {
     status = BehaviorTreeStatus.IDLE
   }
 
   override fun tick() {
-    status = BehaviorTreeStatus.RUNNING
     status = if (condition()) BehaviorTreeStatus.SUCCESS else BehaviorTreeStatus.FAILURE
   }
 }
 
+
 // Perform node: executes an action and always returns success
 class PerformNode(override val label: String? = null, private val action: () -> Unit) :
-    IBehaviorNode {
+  IBehaviorNode {
   override val children: List<IBehaviorNode> = emptyList()
   override var status: BehaviorTreeStatus = BehaviorTreeStatus.IDLE
-    private set
 
   override fun reset() {
     status = BehaviorTreeStatus.IDLE
@@ -112,13 +186,13 @@ class PerformNode(override val label: String? = null, private val action: () -> 
   }
 }
 
+
 // Conditional decorator node: runs child if condition is true
 class ConditionalNode(private val condition: () -> Boolean, private val child: IBehaviorNode) :
-    IBehaviorNode {
+  IBehaviorNode {
   override val label: String = "Conditional"
   override val children: List<IBehaviorNode> = listOf(child)
   override var status: BehaviorTreeStatus = BehaviorTreeStatus.IDLE
-    private set
 
   override fun reset() {
     status = BehaviorTreeStatus.IDLE
@@ -126,23 +200,22 @@ class ConditionalNode(private val condition: () -> Boolean, private val child: I
   }
 
   override fun tick() {
-    status = BehaviorTreeStatus.RUNNING
     if (condition()) {
       child.tick()
       status = child.status
     } else {
       status = BehaviorTreeStatus.FAILURE
+      child.reset()
     }
   }
 }
 
-// RepeatUntil node: repeats child until a certain status is returned
-class RepeatUntilNode(private val stopStatus: () -> Boolean, private val child: IBehaviorNode) :
-    IBehaviorNode {
+// RepeatUntil node: repeats child until a certain condition is met
+class RepeatUntilNode(private val stopCondition: () -> Boolean, private val child: IBehaviorNode) :
+  IBehaviorNode {
   override val label: String = "RepeatUntil"
   override val children: List<IBehaviorNode> = listOf(child)
   override var status: BehaviorTreeStatus = BehaviorTreeStatus.IDLE
-    private set
 
   override fun reset() {
     status = BehaviorTreeStatus.IDLE
@@ -150,31 +223,47 @@ class RepeatUntilNode(private val stopStatus: () -> Boolean, private val child: 
   }
 
   override fun tick() {
-    status = BehaviorTreeStatus.RUNNING
-    while (true) {
-      child.tick()
-      if (stopStatus() || child.status == BehaviorTreeStatus.KILL) {
-        status = child.status
-        return
+    if (stopCondition()) {
+      status = BehaviorTreeStatus.SUCCESS
+      child.reset()
+      return
+    }
+
+    child.tick()
+
+    when (child.status) {
+      BehaviorTreeStatus.SUCCESS, BehaviorTreeStatus.FAILURE -> {
+        child.reset()
+        status = BehaviorTreeStatus.RUNNING
+      }
+
+      BehaviorTreeStatus.RUNNING -> {
+        status = BehaviorTreeStatus.RUNNING
+      }
+
+      BehaviorTreeStatus.KILL -> {
+        status = BehaviorTreeStatus.KILL
+      }
+
+      else -> {
+        status = BehaviorTreeStatus.FAILURE
       }
     }
   }
 }
 
-// BehaviorTree class to build and execute the tree
-class BehaviorTree(private val root: IBehaviorNode) {
-  fun tick() {
-    root.tick()
-  }
 
-  fun reset() {
-    root.reset()
+// BehaviorTree class to build and execute the tree
+class BehaviorTree(private val rootNode: IBehaviorNode) {
+  fun tick() {
+    rootNode.tick()
   }
 
   fun root(): IBehaviorNode {
-    return root
+    return rootNode
   }
 }
+
 
 // Helper functions to build the tree using DSL-like syntax
 fun behaviorTree(label: String? = null, init: IParentNode.() -> Unit): BehaviorTree {
@@ -209,8 +298,8 @@ fun IParentNode.conditional(initCondition: () -> Boolean, init: IParentNode.() -
   addChild(ConditionalNode(initCondition, childNode))
 }
 
-fun IParentNode.repeatUntil(stopStatus: () -> Boolean, init: IParentNode.() -> Unit) {
+fun IParentNode.repeatUntil(stopCondition: () -> Boolean, init: IParentNode.() -> Unit) {
   val childNode = SequenceNode()
   childNode.init()
-  addChild(RepeatUntilNode(stopStatus, childNode))
+  addChild(RepeatUntilNode(stopCondition, childNode))
 }

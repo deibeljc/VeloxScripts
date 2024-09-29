@@ -1,8 +1,8 @@
 package scripts
 
 import org.tribot.script.sdk.Log
-import scripts.behaviortree.IParentNode
-import scripts.behaviortree.perform
+import scripts.frameworks.IParentNode
+import scripts.frameworks.perform
 
 data class StateHistory(val state: String, val timestamp: Long, var duration: Long = 0L)
 
