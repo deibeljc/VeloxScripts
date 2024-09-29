@@ -8,7 +8,7 @@ class ExperienceTracker {
   private var lastUpdateTime: Instant = Instant.now()
   private val newSkillListeners = mutableListOf<(Skill) -> Unit>()
   private val inactivityThreshold: Long = 60 * 3
-  private val inactivityStatusListeners = mutableMapOf<Skill, MutableList<(Boolean) -> Unit>>()
+  private val activityStatusListeners = mutableMapOf<Skill, MutableList<(Boolean) -> Unit>>()
 
   fun update() {
     val currentTime = Instant.now()
@@ -28,7 +28,7 @@ class ExperienceTracker {
       val isNowInactive = tracker.isInactive(currentTime)
       if (wasInactive != isNowInactive) {
         tracker.wasInactive = isNowInactive
-        inactivityStatusListeners[skill]?.forEach { it(isNowInactive) }
+        activityStatusListeners[skill]?.forEach { it(isNowInactive) }
       }
     }
     lastUpdateTime = currentTime
@@ -110,7 +110,6 @@ class ExperienceTracker {
     fun getStats(): SkillStats {
       val totalChange = currentXp - startXp
       val recentChange = currentXp - lastXp
-      val duration = java.time.Duration.between(startTime, Instant.now())
       val activeTime = calculateActiveTime()
       val xpPerHour =
           if (activeTime > 0) {
@@ -166,11 +165,11 @@ class ExperienceTracker {
     newSkillListeners.remove(listener)
   }
 
-  fun addInactivityStatusListener(skill: Skill, listener: (Boolean) -> Unit) {
-    inactivityStatusListeners.getOrPut(skill) { mutableListOf() }.add(listener)
+  fun addActivityStatusListener(skill: Skill, listener: (Boolean) -> Unit) {
+    activityStatusListeners.getOrPut(skill) { mutableListOf() }.add(listener)
   }
 
-  fun removeInactivityStatusListener(skill: Skill, listener: (Boolean) -> Unit) {
-    inactivityStatusListeners[skill]?.remove(listener)
+  fun removeActivityStatusListener(skill: Skill, listener: (Boolean) -> Unit) {
+    activityStatusListeners[skill]?.remove(listener)
   }
 }

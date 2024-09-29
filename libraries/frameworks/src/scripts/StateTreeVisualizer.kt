@@ -1,13 +1,13 @@
 package scripts.frameworks
 
-import org.tribot.script.sdk.ScriptListening
-import org.tribot.script.sdk.interfaces.EventOverride
-import org.tribot.script.sdk.interfaces.KeyEventOverrideListener
 import java.awt.Color
 import java.awt.Font
 import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.event.KeyEvent
+import org.tribot.script.sdk.ScriptListening
+import org.tribot.script.sdk.interfaces.EventOverride
+import org.tribot.script.sdk.interfaces.KeyEventOverrideListener
 
 class StateTreeVisualizer(private val stateMachine: StateMachine) {
   private val nodeHeight = 30
@@ -54,7 +54,7 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
     // Draw states and their behavior trees
     for (state in sm.states) {
       val stateHeight =
-        renderState(g, state, x + horizontalSpacing, currentY, level, sm.currentState == state)
+          renderState(g, state, x + horizontalSpacing, currentY, level, sm.currentState == state)
       currentY += stateHeight + verticalSpacing / 4 // Reduced spacing after state
 
       // Calculate and render behavior tree
@@ -70,12 +70,12 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
   }
 
   private fun renderState(
-    g: Graphics2D,
-    state: State,
-    x: Int,
-    y: Int,
-    level: Int,
-    isCurrent: Boolean
+      g: Graphics2D,
+      state: State,
+      x: Int,
+      y: Int,
+      level: Int,
+      isCurrent: Boolean
   ): Int {
     g.color = if (isCurrent) Color.GREEN else Color.WHITE
     g.fillRect(x, y, nodeWidth, nodeHeight)
@@ -88,7 +88,7 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
     // Draw nested state machine if present
     state.nestedStateMachine?.let { nestedSM ->
       val nestedHeight =
-        renderStateMachine(g, nestedSM, x + nodeWidth + horizontalSpacing, y, level + 1)
+          renderStateMachine(g, nestedSM, x + nodeWidth + horizontalSpacing, y, level + 1)
       totalHeight = maxOf(totalHeight, nestedHeight)
     }
 
@@ -105,24 +105,24 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
   }
 
   private fun renderBehaviorNode(
-    g: Graphics2D,
-    node: IBehaviorNode,
-    x: Int,
-    y: Int,
-    depth: Int
+      g: Graphics2D,
+      node: IBehaviorNode,
+      x: Int,
+      y: Int,
+      depth: Int
   ): Int {
     val folderHeight = 20
     val indentation = 20
     val verticalSpacing = 2
 
     val color =
-      when (node.status) {
-        BehaviorTreeStatus.SUCCESS -> Color.GREEN
-        BehaviorTreeStatus.FAILURE -> Color.RED
-        BehaviorTreeStatus.RUNNING -> Color.YELLOW
-        BehaviorTreeStatus.IDLE -> Color.GRAY
-        else -> Color.BLACK
-      }
+        when (node.status) {
+          BehaviorTreeStatus.SUCCESS -> Color.GREEN
+          BehaviorTreeStatus.FAILURE -> Color.RED
+          BehaviorTreeStatus.RUNNING -> Color.YELLOW
+          BehaviorTreeStatus.IDLE -> Color.GRAY
+          else -> Color.BLACK
+        }
 
     val nodeName = "[${node.javaClass.simpleName}] ${node.label ?: ""}"
     val metrics = g.fontMetrics
@@ -152,7 +152,7 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
   private fun renderScrollBar(g: Graphics2D, width: Int, height: Int, totalHeight: Int) {
     val viewportRatio = height.toFloat() / totalHeight
     val scrollBarHeight =
-      (height * viewportRatio).coerceAtLeast(scrollBarMinHeight.toFloat()).toInt()
+        (height * viewportRatio).coerceAtLeast(scrollBarMinHeight.toFloat()).toInt()
     val scrollBarY = (scrollOffset.toFloat() / totalHeight * height).toInt()
 
     // Draw scrollbar background
@@ -166,15 +166,20 @@ class StateTreeVisualizer(private val stateMachine: StateMachine) {
 
   fun setupScrollListener() {
     ScriptListening.addKeyEventOverrideListener(
-      KeyEventOverrideListener { event ->
-        if (event.id == KeyEvent.KEY_PRESSED) {
-          when (event.keyCode) {
-            KeyEvent.VK_UP -> scrollOffset -= 100
-            KeyEvent.VK_DOWN -> scrollOffset += 100
+        KeyEventOverrideListener { event ->
+          if (event.id == KeyEvent.KEY_PRESSED) {
+            when (event.keyCode) {
+              KeyEvent.VK_UP -> scrollOffset -= 100
+              KeyEvent.VK_DOWN -> scrollOffset += 100
+            }
           }
-        }
-        return@KeyEventOverrideListener EventOverride.DISMISS
-      })
+
+          if (event.keyCode == KeyEvent.VK_UP || event.keyCode == KeyEvent.VK_DOWN) {
+            return@KeyEventOverrideListener EventOverride.DISMISS
+          }
+
+          return@KeyEventOverrideListener EventOverride.SEND
+        })
   }
 
   fun handleScroll(scrollAmount: Int, totalHeight: Int, height: Int) {
